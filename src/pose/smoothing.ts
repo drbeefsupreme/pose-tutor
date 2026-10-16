@@ -1,17 +1,13 @@
 import type { Landmark, PoseLandmarks } from './landmarks';
 
-export interface SmoothingConfig {
-  /** Cutoff in Hz while a landmark is still. Lower is steadier and lags more. */
-  readonly minCutoff: number;
-  /** Cutoff rise in Hz per image height per second of landmark speed. Higher follows fast moves with less lag. */
-  readonly beta: number;
-  /** Cutoff in Hz of the speed estimate. */
-  readonly speedCutoff: number;
-  /** A gap without a pose up to this long repeats the last pose; a longer gap ends the track. */
-  readonly maxGapMs: number;
-}
-
-export const SMOOTHING: SmoothingConfig = { minCutoff: 1, beta: 4, speedCutoff: 1, maxGapMs: 300 };
+/** Cutoff in Hz while a landmark is still. Lower is steadier and lags more. */
+const MIN_CUTOFF = 1;
+/** Cutoff rise in Hz per image height per second of landmark speed. Higher follows fast moves with less lag. */
+const BETA = 4;
+/** Cutoff in Hz of the speed estimate. */
+const SPEED_CUTOFF = 1;
+/** A gap without a pose up to this long repeats the last pose; a longer gap ends the track. */
+const MAX_GAP_MS = 300;
 
 interface Track {
   readonly t: number;
@@ -32,7 +28,7 @@ function alpha(cutoff: number, dt: number): number {
 /**
  * A One Euro filter (Casiez, Roussel and Vogel, CHI 2012) over each landmark's position: a low-pass filter whose
  * cutoff rises with speed, so a held pose stops jittering while a fast move lags little. Visibility gets the
- * still cutoff only. Frames without a pose are dropped: a gap up to `maxGapMs` repeats the last pose, a longer one
+ * still cutoff only. Frames without a pose are dropped: a gap up to `MAX_GAP_MS` repeats the last pose, a longer one
  * ends the track, and the next pose starts a new one.
  *
  * MediaPipe's VIDEO mode already smooths: on a noisy still clip, elbows and wrists moved 1.49 px a frame in IMAGE
@@ -40,15 +36,9 @@ function alpha(cutoff: number, dt: number): number {
  */
 export class LandmarkSmoother {
   private track: Track | undefined;
-  private readonly config: SmoothingConfig;
-
-  constructor(config: SmoothingConfig = SMOOTHING) {
-    this.config = config;
-  }
 
   next(lm: PoseLandmarks | undefined, timestampMs: number): PoseLandmarks | undefined {
-    const { minCutoff, beta, speedCutoff, maxGapMs } = this.config;
-    const live = this.track !== undefined && timestampMs - this.track.t <= maxGapMs ? this.track : undefined;
+    const live = this.track !== undefined && timestampMs - this.track.t <= MAX_GAP_MS ? this.track : undefined;
     if (lm === undefined) {
       this.track = live;
       return live?.pose;
@@ -62,11 +52,11 @@ export class LandmarkSmoother {
     const dt = (timestampMs - live.t) / 1000;
     if (!(dt > 0)) return live.pose;
     const { value, speed } = live;
-    const toSpeed = alpha(speedCutoff, dt);
-    const toVisibility = alpha(minCutoff, dt);
+    const toSpeed = alpha(SPEED_CUTOFF, dt);
+    const toVisibility = alpha(MIN_CUTOFF, dt);
     const follow = (k: number, s: number, raw: number, perSecond: number): number => {
       speed[s] += toSpeed * ((raw - value[k]) * perSecond - speed[s]);
-      value[k] += alpha(minCutoff + beta * Math.abs(speed[s]), dt) * (raw - value[k]);
+      value[k] += alpha(MIN_CUTOFF + BETA * Math.abs(speed[s]), dt) * (raw - value[k]);
       return value[k];
     };
     const points: Landmark[] = lm.points.map((p, i) => {
