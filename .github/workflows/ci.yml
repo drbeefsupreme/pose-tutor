@@ -15,7 +15,7 @@ env:
   NODE_VERSION: 22.23.0
 
 # The device gate (npm run check:android) stays out of CI. It boots the harness emulator with a virtual camera,
-# runs for about 15 minutes, and writes reports and screenshots under docs/ for a person to read. Run it locally.
+# runs for about 8 minutes, and writes reports and screenshots under docs/ for a person to read. Run it locally.
 jobs:
   check:
     name: npm run check
