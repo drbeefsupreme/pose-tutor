@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "check": "npm run lint && npm run typecheck && npm test",
+    "check:android": "node scripts/check-android.ts",
     "lint": "oxlint --deny-warnings",
     "test": "vitest run",
     "typecheck": "tsc && tsc -p tsconfig.scripts.json",
