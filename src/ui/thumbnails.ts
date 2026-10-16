@@ -6,6 +6,10 @@ const SIZE = { width: 180, height: 270 } as const;
 
 export type Thumbnails = Readonly<Record<PoseId, string>>;
 
+function mapValues<K extends string, A, B>(record: Readonly<Record<K, A>>, f: (value: A) => B): Record<K, B> {
+  return Object.fromEntries(Object.entries<A>(record).map(([key, value]) => [key, f(value)])) as Record<K, B>;
+}
+
 let rendering: Promise<Thumbnails> | undefined;
 
 async function render(): Promise<Thumbnails> {
@@ -14,13 +18,12 @@ async function render(): Promise<Thumbnails> {
   document.body.append(host);
   let figure: FigureRenderer | undefined;
   try {
-    figure = await FigureRenderer.load(host, 'stage');
-    const out: Partial<Record<PoseId, string>> = {};
-    for (const [pose, figurePose] of Object.entries(FIGURE_POSES) as [PoseId, (typeof FIGURE_POSES)[PoseId]][]) {
-      figure.setPose(figurePose, { instant: true });
-      out[pose] = figure.snapshot().toDataURL('image/webp', 0.85);
-    }
-    return out as Thumbnails;
+    const loaded = await FigureRenderer.load(host, 'stage');
+    figure = loaded;
+    return mapValues(FIGURE_POSES, (figurePose) => {
+      loaded.setPose(figurePose, { instant: true });
+      return loaded.snapshot().toDataURL('image/webp', 0.85);
+    });
   } finally {
     figure?.dispose();
     host.remove();
