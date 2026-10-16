@@ -86,7 +86,6 @@
 .tutor-mic { font-size: 0.72rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
 .tutor-mic.listening { color: var(--good); border-color: rgba(74, 222, 128, 0.5); }
 .tutor-mic.denied, .tutor-mic.error { color: var(--bad); }
-.tutor-keys { margin-left: auto; font-size: 0.74rem; }
 
 .tutor-stage { display: grid; grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.45fr) 320px; gap: 12px; padding: 12px; min-height: 0; }
 .tutor-figure, .tutor-camera { position: relative; margin: 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); min-height: 0; }
@@ -221,7 +220,7 @@
   .tutor-run-bar > .pill { flex: none; min-height: 48px; padding: 0 14px; font-size: 0.95rem; }
   .tutor-run-title { flex: 1; overflow: hidden; }
   .tutor-run-title h2 { font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tutor-run-title .hint, .tutor-keys { display: none; }
+  .tutor-run-title .hint { display: none; }
   .tutor-clock { flex: none; font-size: 1.7rem; }
   .tutor-mic { flex: none; max-width: 28vw; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 

@@ -332,7 +332,7 @@ function report(o: ReportInput): string {
     `- Device: ${o.device}.`,
     `- Front camera: one clip per mode (camera-video.sh, ${SECONDS_PER_FRAME} s per frame, ${TRANSITION_FRAMES} in-between frames (${MOVE_SECONDS} s) from each pose to the next and from the last back to the first). The emulator loops a clip. After the camera is closed for ${CAMERA_IDLE_MS / 1000} s, it reads the file again and plays it from the start when the app starts the camera; so the driver puts a mode's clip in place and waits ${CAMERA_IDLE_MS / 1000} s before it starts the mode.`,
     ...CLIP_IDS.map((id) => `  - \`${relative(ROOT, clipVideo(id))}\`: ${describeClip(id)}.`),
-    '- Driver: CDP into the app WebView through `adb forward`. Each mode starts with its `button[data-mode]` on the home screen and ends with the Exit button. Learn ends its build-up with the Space key, Judge\'s calls stop with Escape after call 3.',
+    '- Driver: CDP into the app WebView through `adb forward`. Each mode starts with its `button[data-mode]` on the home screen and ends with the Exit button. Learn ends its build-up with the Next button, Judge\'s calls stop with the voice command "stop" after call 3.',
     '',
     '## Checks',
     '',
@@ -462,7 +462,7 @@ main(async (cleanup) => {
   };
   const endBuildUp = async () => {
     for (let i = 0; i < 20 && (await seen())?.stage?.kind === 'step'; i++) {
-      await ev(`window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }))`);
+      await click('.tutor-controls button', 'Next');
       await sleep(400);
     }
     const practice = await seen();
@@ -634,7 +634,7 @@ main(async (cleanup) => {
       }
       return s.stage?.kind === 'done' || next > calls ? s : undefined;
     }, 250);
-    if (end.stage?.kind !== 'done') await ev(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`);
+    if (end.stage?.kind !== 'done') await ev(`window.__tutorVoice('stop')`);
     const done = await until('the round summary', 10_000, (s) => s.stage?.kind === 'done');
     const summary = done.stage?.kind === 'done' ? done.stage.summary : undefined;
     const results = summary?.mode === 'judge' ? summary.calls : [];

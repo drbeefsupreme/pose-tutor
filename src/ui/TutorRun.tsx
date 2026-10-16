@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import type { Command } from '../modes/commands';
 import type { FigureTarget } from '../modes/mode';
 import type { TutorSettings } from '../modes/settings';
 import { platform } from '../platform/android';
@@ -15,15 +14,6 @@ declare global {
     __tutorState?: () => Snapshot;
   }
 }
-
-const KEYS: Record<string, Command> = {
-  ' ': 'next',
-  ArrowRight: 'next',
-  s: 'skip',
-  r: 'repeat',
-  w: 'whatsWrong',
-  Escape: 'stop',
-};
 
 const HEARD_SHOW_MS = 4000;
 const RELAXED: FigureTarget = { kind: 'pose', pose: 'relaxedFront' };
@@ -77,18 +67,6 @@ function RunView({ engine, onAgain, onHome }: Props & { engine: TutorEngine }) {
 
   const paused = snap.view?.paused ?? false;
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.repeat) return;
-      const command: Command | undefined = e.key === 'p' || e.key === 'P' ? (paused ? 'resume' : 'pause') : KEYS[e.key];
-      if (!command) return;
-      e.preventDefault();
-      engine.command(command);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [engine, paused]);
-
-  useEffect(() => {
     if (!snap.heard) return;
     const timer = window.setTimeout(() => setNow(performance.now()), HEARD_SHOW_MS);
     setNow(performance.now());
@@ -122,7 +100,6 @@ function RunView({ engine, onAgain, onHome }: Props & { engine: TutorEngine }) {
           {(snap.listening === 'error' || snap.listening === 'denied') && snap.listenError ? ` (${snap.listenError})` : ''}
           {snap.listenError === 'network' ? ' · speech needs the network or an offline language pack' : ''}
         </span>
-        <span className="tutor-keys hint">Space next · S skip · R repeat · W what's wrong · P pause · Esc stop</span>
       </header>
 
       <div className="tutor-stage" data-swapped={swapped || undefined}>

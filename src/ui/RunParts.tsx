@@ -32,7 +32,7 @@ const FRAMING_TEXT: Record<FramingReason, string> = {
 };
 
 export function PhaseLine({ stage, paused }: { stage: Stage; paused: boolean }) {
-  if (paused) return <p className="tutor-phase" data-phase="paused">Paused · say "resume" or press P</p>;
+  if (paused) return <p className="tutor-phase" data-phase="paused">Paused · say "resume" or tap Resume</p>;
   switch (stage.kind) {
     case 'step':
       return (
@@ -41,7 +41,7 @@ export function PhaseLine({ stage, paused }: { stage: Stage; paused: boolean }) 
             Step {stage.index + 1} / {stage.count}
           </span>
           <p className="tutor-step">{stage.text}</p>
-          <p className="hint">Say "next" or press Space for the next step.</p>
+          <p className="hint">Say "next" or tap Next for the next step.</p>
         </div>
       );
     case 'framing':
