@@ -1,8 +1,8 @@
 # Men's bodybuilding pose spec for the pose tutor
 
-The research behind the scoring spec (src/pose/spec.ts). All sources were fetched on 2026-10-10.
+This file is the research behind the scoring spec in `src/pose/spec.ts`. I fetched all sources on 2026-10-10.
 
-This file serves two readers. The pose-scoring engine needs camera-visible targets with pass bands. The voice coach needs faults, short spoken cues, and a build-up order. Every pose section has the same five parts: official text, geometry targets, coach-only cues, faults, and build-up steps. Left-right variants have their own section after the poses.
+The file has two readers. The pose-scoring engine needs targets that a camera can see, with pass bands. The voice coach needs faults, short spoken cues, and a build-up order. Every pose section has the same five parts: official text, geometry targets, coach-only cues, faults, and build-up steps. Left-right variants have their own section after the poses.
 
 ## How to read the numbers
 
@@ -17,9 +17,9 @@ Spoken cues are my wording. The source column of each fault row says where the f
 
 ## Metric definitions
 
-The camera stands where the judges sit: in front of the athlete, at about judge eye level, with the whole body in frame. Mentzer's method also records every pose "from the judges' approximate eye level" [S18]. Left and right are always the athlete's own sides. "Near" is the side closer to the camera.
+The camera stands where the judges sit. It is in front of the athlete, at about judge eye level, with the whole body in frame. Mentzer's method also records every pose "from the judges' approximate eye level" [S18]. Left and right are always the athlete's own sides. "Near" is the side closer to the camera.
 
-All angles are measured in the image plane on BlazePose-style 2D landmarks (nose, ears, shoulders, elbows, wrists, hips, knees, ankles, heels, toes). "Torso" is the image distance from the mid-shoulder point to the mid-hip point. Heights are in torso lengths and are positive above the reference point. The engine should capture one relaxed-front calibration frame per user, because several metrics compare against the user's own baseline [ESTIMATE].
+The metrics measure all angles in the image plane, on BlazePose 2D landmarks (nose, ears, shoulders, elbows, wrists, hips, knees, ankles, heels, toes). "Torso" is the image distance from the mid-shoulder point to the mid-hip point. Heights are in torso lengths and are positive above the reference point. Several metrics compare against the user's own baseline, so the app captures one relaxed-front calibration frame per session [CODE]. The code writes the metric names in camel case (`hip_width` is `hipWidth` in `src/pose/metrics.ts`).
 
 | Metric | Definition | Evidence and limits |
 |---|---|---|
@@ -29,7 +29,7 @@ All angles are measured in the image plane on BlazePose-style 2D landmarks (nose
 | shoulder_width | shoulder-to-shoulder distance / torso | Shrinks when the arms go overhead: 0.54..0.60 in abdominals and thighs [M n=3]. Use it for twist, not for facing. |
 | twist | upper body turned toward the camera, relative to the hips | 2D estimate: angle = acos(width / calibrated front width) for shoulders and for hips, then the difference [ESTIMATE model]. |
 | stance_ratio | horizontal ankle-to-ankle distance / horizontal shoulder-to-shoulder distance | Front and back views only. To convert a rulebook distance, divide by the user's shoulder width. |
-| stagger | horizontal ankle-to-ankle distance / torso | Side views only: the front-back spread of the feet. Relaxed side 0.00, side chest 0.02..0.08, side triceps 0.06..0.50 [M]. |
+| stagger | horizontal ankle-to-ankle distance / torso | Side views only. It is the front-back spread of the feet. Relaxed side 0.00, side chest 0.02..0.08, side triceps 0.06..0.50 [M]. |
 | knee_flex | 180° minus the hip-knee-ankle angle | 0° is a straight leg. |
 | heel_lift | (toe_y minus heel_y) / heel-to-toe length, image y pointing down | Side views only. In the side chest photos, the near foot (on its toes by rule) read 0.41..0.82 and the far foot read 0.06..0.13 [M n=3]. A flat foot that points toward the camera read 0.59 [M n=1], and flat feet in front views read 0.37..0.61 [M], so the metric fails when the foot points at the camera. |
 | abduction | angle between the upper arm (shoulder to elbow) and the trunk midline (mid-shoulder to mid-hip) | 0° is an arm along the trunk, 90° is perpendicular, 180° is overhead. In side views it cannot see forward arm movement. |
@@ -669,19 +669,20 @@ Two poses have a mandatory left or right version. Several others have sided legs
 | Abdominals and thighs | legs, arms | One leg forward [S1]. WNBF allows switching legs during the pose [S6]. WNBF Australia allows one hand on the hip [S8]. | `abdominals_and_thighs` plus `forward_leg` |
 | Most muscular | grip, legs | Free choice of variant and grip hand [S17][S8]. | `most_muscular` plus `variant` |
 
-Convention: name a side pose after the athlete's side that faces the camera, as IFBB does ("left or right side towards the judges" [S1]). In `side_chest_left`, the left arm is the bent front arm and the left heel is up. In `side_triceps_left`, the left arm is straight. If the app mirrors the camera preview, derive sides from the landmark labels and not from screen position. Default to the user's chosen "better" side, and let comparison practice call both sides as OCB does [S9].
+The convention names a side pose after the athlete's side that faces the camera, as IFBB does ("left or right side towards the judges" [S1]). In `side_chest_left`, the left arm is the bent front arm and the left heel is up. In `side_triceps_left`, the left arm is straight. The camera preview is mirrored, so derive the sides from the landmark labels, not from the screen position. Default to the user's chosen "better" side, and let comparison practice call both sides, as OCB does [S9].
 
-Figure fact: `Pose` in `scripts/figure/skeleton.ts` is "defined for the LEFT side in world-rest axes. The right side is mirrored automatically." [CODE]. A mirrored pose can show only the relaxed front and back, the front lat spread, and symmetric-leg versions of the double biceps poses. Every sided row in the table above needs separate left and right bone rotations before the 3D model can show the target.
+The figure build has a mirrored `Pose` type in `scripts/figure/skeleton.ts`, "defined for the LEFT side in world-rest axes. The right side is mirrored automatically." [CODE]. The app's figure poses do not use it. `FigurePose` in `src/pose/types.ts` gives each limb bone an explicit side, so the 3D figure can show the sided poses [CODE].
 
 ## Reference measurements
 
-Method:
+The method:
+
 - Tool: MediaPipe Pose Landmarker, heavy model [S22], Python package `mediapipe` 1.1.0, IMAGE mode, in a one-off script that is not kept.
-- Landmarks: every detection is kept in `src/pose/fixtures/refs-landmarks.json`, with the metrics measured from it.
+- Landmarks: `src/pose/fixtures/refs-landmarks.json` keeps every detection, with the metrics measured from it.
 - Photos: 26 reference images. Eight come from the IFBB 2019 men's bodybuilding rules: Figures 1..7 and the Appendix 3 "Front Position" [S2]. Nine come from the IFBB 2019 Men's Classic Physique rules: the front position, three quarter turns, and five poses [S3]. Nine come from the WNBF pose infographics [S7]. The IFBB sets show one athlete each. In the WNBF set, the side chest and rear double biceps athletes are women.
 - Why the 2019 IFBB pictures: the 2026 PDF lists "Appendix 2: Pictures of the Seven Mandatory Poses", but `pdfimages` finds only one image in it, the logo on page 1 [S1]. The 2019 pose text matches the 2026 text word for word apart from one heading word [S1][S2].
-- Results: all 26 images produced a pose. The overlays were checked by eye.
-- Limits: n is 1..3 per pose. Angles are 2D, so depth (elbows forward, a forward foot, lean) is weak. The athletes are trained professionals photographed in a studio, not beginners on a webcam. Pass bands built from these ranges are [ESTIMATE].
+- Results: all 26 images produced a pose. I checked the overlays by eye.
+- Limits: n is 1..3 per pose. Angles are 2D, so depth (elbows forward, a forward foot, lean) is weak. The athletes are trained professionals in a studio, not beginners in front of a phone. The pass bands built from these ranges are [ESTIMATE].
 
 | Pose | n | abduction | elbow_flex | elbow_height | wrist_height | stance_ratio, or stagger for side poses | hip_width | elbow_span | knee_flex (lower / higher leg) | hidden wrists |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -730,20 +731,19 @@ All URLs were fetched on 2026-10-10.
 ## Open questions
 
 - Which federation is the default? IFBB 2026 men's bodybuilding has 7 poses, no most muscular, and no quarter turns [S1]. NPC, IFBB Pro, WNBF, and OCB all use quarter turns and a most muscular [S4][S5][S6][S9]. The app needs a federation setting at least for the side triceps feet, the front double biceps stance, the relaxed foot angle, and the pose list.
-- No rulebook gives an arm angle. Every arm number in this file comes from 26 photos, with 1..3 photos per pose [M]. A larger set of 20 or more photos per pose [ESTIMATE], with several athletes and both sides, would firm up the bands.
-- Depth-only targets cannot be checked with one 2D camera: elbows forward in the lat spreads and the double biceps [S6][S12][S15], the forward leg [S1], and the abdominal crunch [S1]. Single-image 3D lean read -2.5..16.4° across the front poses other than the crab [M]. This needs a test on real webcam video.
+- No rulebook gives an arm angle. Every arm number in this file comes from 26 photos, with 1..3 photos per pose [M]. A larger set of 20 or more photos per pose [ESTIMATE], with several athletes and both sides, would narrow the bands.
+- One 2D camera cannot check the targets that only depth shows: elbows forward in the lat spreads and the double biceps [S6][S12][S15], the forward leg [S1], and the abdominal crunch [S1]. Single-image 3D lean read -2.5..16.4° across the front poses other than the crab [M]. This needs a test on real phone video.
 - Hidden wrists: both wrists in abdominals and thighs and the back lat spread, and the rear wrist in side triceps, read visibility 0.00..0.26 [M]. These poses must be scored from shoulders and elbows.
 - Head direction (turn the head in the back double biceps, face the camera in the side poses, look along the body in the relaxed side) needs face landmarks. I did not measure it.
 - Fists versus open hands needs a hand landmarker. I did not test one.
 - Coaches disagree in four places: elbows back in the back double biceps [S11] versus [S12][S16]; leaning back in the front lat spread [S16] versus [S6]; breathing in side triceps [S6] versus [S8]; and flexed arms in abdominals and thighs [S6] versus [S12]. I followed the federation text each time.
-- Webcam height and distance: Mentzer records from judge eye level [S18]. A laptop camera at desk height looks up at the athlete and will shift heights and lean. The app should guide the camera setup.
+- Camera height and distance: Mentzer records from judge eye level [S18]. A camera low on a table looks up at the athlete and shifts the heights and the lean. The app should guide the camera setup.
 - Two WNBF references are women. Female arm angles may differ from male ones in the side chest and rear double biceps.
-- The mirrored `Pose` type [CODE] cannot show the sided poses. Decide whether the viewer gets per-side bone data or a mirror flag per pose.
 - The voice cues are my wording. Test them with beginners for clarity and timing.
 
 ## Practice formats coaches recommend
 
-These become the practice modes.
+The sources recommend these formats. The table after the list proposes a practice mode for each one.
 
 - Holding drills. Human Kinetics recommends long sessions that run through all the poses several times, "holding each pose a few seconds longer (about five to 10 seconds total) than will usually be asked of you in competition" [S14]. Mentzer's progression starts with "short holds and ample rest", then "Gradually extend the holds" while breathing under tension [S18]. WNBF calls posing stamina "critical" [S6].
 - Build-up order. Learn each pose from the ground up: feet, legs, pelvis and waist, rib cage and lats, arms and hands, then head and expression. "Only after these pieces can be reproduced should the hold be lengthened" [S18][S14].
@@ -755,7 +755,9 @@ These become the practice modes.
 - Feedback. Record from judge eye level, change "one variable at a time", review still frames and unfamiliar angles, and rehearse without a mirror before the show [S18]. Dorian Yates noted "you can't really see your back when posing even with two mirrors" [S21].
 - Frequency. Mentzer recommended "at least three half-hour posing sessions each week", more often as the contest nears, without draining sessions in the final days [S18]. Breaking Muscle says to practice right after workouts or when fresh, more often as the show approaches [S12].
 
-| Practice mode | What the app does | Basis |
+The app builds three of these proposals [CODE]. Learn a pose and Hold drill follow the Learn and Hold rows, with hold goals of 10, 20 or 30 s. Judge's calls joins the quarter turns and the NPC and IFBB Pro mandatory run, in order, with 25 s for each call. Mirror is an app mode with no row here. The other rows are not built.
+
+| Practice mode | What the mode would do | Basis |
 |---|---|---|
 | Learn | Walks one pose through the 8 build-up steps with short holds of 3..5 s [ESTIMATE] | [S14][S18] |
 | Hold | Holds one pose for 10..15 s [ESTIMATE] and scores stability; extends the hold over sessions | [S14][S18] |
