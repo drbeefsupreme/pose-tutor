@@ -47,8 +47,9 @@ function B(pts: BPt[], r0: number, rp: number, r1: number, tp: number, dr: numbe
 
 const ell = (c: BPt, r: V3, rot?: V3, neg?: boolean): CorePrim => ({ kind: 'ell', c, r, rot, neg });
 const cone = (a: BPt, b: BPt, ra: number, rb: number): CorePrim => ({ kind: 'cone', a, b, ra, rb });
+const named = (name: string, prim: CorePrim): CorePrim => ({ ...prim, name });
 
-export { P, B, ell, cone, arm, fore, armDir, foreDir, limb, S, E, W, ARM, FORE };
+export { P, B, ell, cone, named, arm, fore, armDir, foreDir, limb, S, E, W, ARM, FORE };
 
 interface RegionModule { muscles: MuscleDef[]; cores: CoreDef[]; veins: VeinDef[]; fat: FatDeposit[] }
 

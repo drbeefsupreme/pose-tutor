@@ -1,4 +1,6 @@
 import type { CoreDef, FatDeposit, MuscleDef, VeinDef } from '../types';
+import type { V3 } from '../types';
+import { JOINTS } from '../skeleton';
 import { P, B, ell, cone, regionModule } from './common';
 
 const muscles: MuscleDef[] = [];
@@ -6,10 +8,16 @@ const cores: CoreDef[] = [];
 const veins: VeinDef[] = [];
 const fat: FatDeposit[] = [];
 
+const PATELLA: V3 = [0.12, 0.54, 0.041];
+const TIBIAL_TUBEROSITY: V3 = [0.121, 0.457, 0.03];
+const FIBULAR_HEAD: V3 = [0.163, 0.462, -0.028];
+const MEDIAL_MALLEOLUS: V3 = [0.117, 0.088, -0.01];
+const LATERAL_MALLEOLUS: V3 = [0.166, 0.075, -0.035];
+
 /** Foot frame: `along` runs from below the ankle toward the toes (toe-out 8 deg), `lat` is lateral, `h` is height above the floor. */
 const TOE_OUT = (8 * Math.PI) / 180;
 const fp = (along: number, lat: number, h: number) =>
-  P('foot', 0.14 + along * Math.sin(TOE_OUT) + lat * Math.cos(TOE_OUT), h, -0.02 + along * Math.cos(TOE_OUT) - lat * Math.sin(TOE_OUT));
+  P('foot', JOINTS.foot[0] + along * Math.sin(TOE_OUT) + lat * Math.cos(TOE_OUT), h, JOINTS.foot[2] + along * Math.cos(TOE_OUT) - lat * Math.sin(TOE_OUT));
 
 // --- Hip: tensor fasciae latae, from the iliac crest behind the ASIS into the iliotibial tract.
 muscles.push({
@@ -147,7 +155,7 @@ cores.push({
     ell(P('thigh', 0.116, 0.525, 0.0), [0.03, 0.035, 0.032]),
     ell(P('shin', 0.09, 0.48, 0.0), [0.03, 0.028, 0.034]),
     ell(P('shin', 0.145, 0.48, -0.004), [0.027, 0.026, 0.032]),
-    ell(P('shin', 0.163, 0.462, -0.028), [0.011, 0.012, 0.011]),
+    ell(P('shin', ...FIBULAR_HEAD), [0.011, 0.012, 0.011]),
     ell(P('shin', 0.104, 0.5, 0.027), [0.016, 0.024, 0.013]),
     ell(P('shin', 0.137, 0.5, 0.027), [0.016, 0.024, 0.013]),
     ell(P('thigh', 0.07, 0.555, 0.012), [0.022, 0.04, 0.026]),
@@ -158,8 +166,8 @@ cores.push({
 // Patella with the quadriceps tendon above it, flat patellar ligament and tibial tuberosity.
 cores.push({
   name: 'patella', region: 'quads', k: 0.012, sep: 0.45,
-  prims: [ell(P('shin', 0.12, 0.54, 0.041), [0.025, 0.027, 0.013]), ell(P('thigh', 0.12, 0.574, 0.045), [0.024, 0.022, 0.011]), ell(P('shin', 0.1205, 0.49, 0.033), [0.014, 0.03, 0.007]),
-    ell(P('shin', 0.121, 0.457, 0.03), [0.015, 0.012, 0.01])],
+  prims: [ell(P('shin', ...PATELLA), [0.025, 0.027, 0.013]), ell(P('thigh', 0.12, 0.574, 0.045), [0.024, 0.022, 0.011]), ell(P('shin', 0.1205, 0.49, 0.033), [0.014, 0.03, 0.007]),
+    ell(P('shin', ...TIBIAL_TUBEROSITY), [0.015, 0.012, 0.01])],
 });
 // Popliteal fat: fills the diamond between the hamstring tendons and the heads of the gastrocnemius.
 cores.push({ name: 'popliteal', region: 'hamstrings', k: 0.02, sep: 0, prims: [ell(P('thigh', 0.117, 0.525, -0.05), [0.032, 0.09, 0.028]), ell(P('thigh', 0.112, 0.61, -0.072), [0.026, 0.05, 0.02])] });
@@ -169,10 +177,10 @@ cores.push({
   prims: [
     ell(P('shin', 0.115, 0.37, 0.012), [0.022, 0.11, 0.013], [0, -53, 0]),
     ell(P('shin', 0.122, 0.2, 0.004), [0.018, 0.11, 0.011], [0, -53, 0]),
-    ell(P('shin', 0.117, 0.088, -0.01), [0.013, 0.016, 0.016]),
+    ell(P('shin', ...MEDIAL_MALLEOLUS), [0.013, 0.016, 0.016]),
   ],
 });
-cores.push({ name: 'fibula', region: 'shins', k: 0.01, sep: 0.3, prims: [cone(P('shin', 0.163, 0.44, -0.03), P('shin', 0.165, 0.11, -0.035), 0.008, 0.008), ell(P('shin', 0.166, 0.075, -0.035), [0.012, 0.016, 0.013])] });
+cores.push({ name: 'fibula', region: 'shins', k: 0.01, sep: 0.3, prims: [cone(P('shin', 0.163, 0.44, -0.03), P('shin', 0.165, 0.11, -0.035), 0.008, 0.008), ell(P('shin', ...LATERAL_MALLEOLUS), [0.012, 0.016, 0.013])] });
 cores.push({ name: 'achilles', region: 'calves', k: 0.01, sep: 0.6, prims: [cone(P('shin', 0.132, 0.24, -0.07), P('foot', 0.14, 0.05, -0.066), 0.012, 0.008)] });
 // Kager's fat pad between the Achilles tendon and the ankle bones (the soft hollows beside the tendon).
 cores.push({ name: 'ankleFill', region: 'calves', k: 0.02, sep: 0, prims: [ell(P('shin', 0.14, 0.11, -0.048), [0.02, 0.045, 0.02])] });

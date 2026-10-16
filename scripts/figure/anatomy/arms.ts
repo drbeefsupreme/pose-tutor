@@ -1,5 +1,5 @@
 import type { CoreDef, CorePrim, FatDeposit, MuscleDef, V3, VeinDef } from '../types';
-import { P, B, ell, cone, arm, fore, armDir, foreDir, limb, ARM, FORE, regionModule } from './common';
+import { P, B, ell, cone, named, arm, fore, armDir, foreDir, limb, ARM, FORE, regionModule } from './common';
 
 const muscles: MuscleDef[] = [];
 const cores: CoreDef[] = [];
@@ -127,10 +127,10 @@ muscles.push({
 cores.push({
   name: 'elbow', region: 'arms', k: 0.016, sep: 0.4,
   prims: [
-    armEll(1.0, 0.0, -0.028, [0.015, 0.021, 0.013]), // olecranon
-    armEll(0.99, -0.043, -0.008, [0.012, 0.014, 0.012]), // medial epicondyle
-    armEll(0.9, -0.038, -0.006, [0.012, 0.03, 0.013]), // medial supracondylar ridge
-    armEll(0.99, 0.034, -0.012, [0.009, 0.011, 0.009]), // lateral epicondyle
+    named('olecranon', armEll(1.0, 0.0, -0.028, [0.015, 0.021, 0.013])),
+    named('medialEpicondyle', armEll(0.99, -0.043, -0.008, [0.012, 0.014, 0.012])),
+    named('medialSupracondylarRidge', armEll(0.9, -0.038, -0.006, [0.012, 0.03, 0.013])),
+    named('lateralEpicondyle', armEll(0.99, 0.034, -0.012, [0.009, 0.011, 0.009])),
   ],
 });
 // Flat common tendon of the triceps on the lower back of the arm (inside the horseshoe).
@@ -141,20 +141,20 @@ cores.push({
 cores.push({
   name: 'wrist', region: 'forearms', k: 0.01, sep: 0.2,
   prims: [
-    foreEll(0.97, 0.004, 0.026, [0.009, 0.012, 0.008]), // radial styloid
-    foreEll(0.95, 0.012, -0.02, [0.009, 0.01, 0.009]), // head of ulna
+    named('radialStyloid', foreEll(0.97, 0.004, 0.026, [0.009, 0.012, 0.008])),
+    named('ulnarHead', foreEll(0.95, 0.012, -0.02, [0.009, 0.01, 0.009])),
   ],
 });
 
 // --- Hand: relaxed loose fist, palm toward the thigh, thumb resting on the index finger.
 {
   const palm: CorePrim[] = [
-    handEll(0.016, -0.002, -0.002, [0.0145, 0.02, 0.027]), // carpus
-    handEll(0.055, -0.003, -0.001, [0.0145, 0.038, 0.04]), // metacarpus
-    handEll(0.045, -0.013, 0.024, [0.014, 0.026, 0.015]), // thenar eminence
-    handEll(0.056, -0.009, 0.031, [0.011, 0.02, 0.011]), // first web space (adductor, first dorsal interosseous)
-    handEll(0.055, -0.011, -0.03, [0.012, 0.03, 0.012]), // hypothenar eminence
-    handEll(0.086, -0.03, 0.006, [0.013, 0.02, 0.03]), // inside of the curled fingers
+    named('carpus', handEll(0.016, -0.002, -0.002, [0.0145, 0.02, 0.027])),
+    named('metacarpus', handEll(0.055, -0.003, -0.001, [0.0145, 0.038, 0.04])),
+    named('thenarEminence', handEll(0.045, -0.013, 0.024, [0.014, 0.026, 0.015])),
+    named('firstWebSpace', handEll(0.056, -0.009, 0.031, [0.011, 0.02, 0.011])),
+    named('hypothenarEminence', handEll(0.055, -0.011, -0.03, [0.012, 0.03, 0.012])),
+    named('curledFingersInside', handEll(0.086, -0.03, 0.006, [0.013, 0.02, 0.03])),
   ];
   // [MCP a, MCP n, segment lengths, radii at MCP/PIP/DIP/tip, sideways drift per segment]
   const fingers: [number, number, V3, number[], number][] = [
@@ -165,7 +165,7 @@ cores.push({
   ];
   const flex = [70, 160, 200].map((d) => d / DEG); // cumulative segment flexion toward the palm
   fingers.forEach(([a0, n0, lens, rad, drift], fi) => {
-    palm.push(handEll(a0 - 0.002, 0.004, n0, [0.011, 0.011, 0.0105])); // knuckle (metacarpal head)
+    palm.push(named('metacarpalHead', handEll(a0 - 0.002, 0.004, n0, [0.011, 0.011, 0.0105])));
     const prims: CorePrim[] = [];
     let a = a0, l = 0, n = n0;
     lens.forEach((L, i) => {
@@ -190,10 +190,10 @@ cores.push({
 cores.push({
   name: 'armEnvelope', region: 'core', k: 0.02, sep: 0,
   prims: [
-    ell(P('upperarm', 0.212, 1.44, -0.005), [0.05, 0.05, 0.05]), // humeral head and rotator cuff
+    named('humeralHeadAndRotatorCuff', ell(P('upperarm', 0.212, 1.44, -0.005), [0.05, 0.05, 0.05])),
     armEll(0.32, 0.004, -0.006, [0.044, 0.12, 0.048]),
     armEll(0.62, 0.002, -0.006, [0.045, 0.11, 0.054]),
-    armEll(0.93, 0.0, -0.008, [0.043, 0.05, 0.027]), // distal humerus: wide and flat
+    named('distalHumerus', armEll(0.93, 0.0, -0.008, [0.043, 0.05, 0.027])),
   ],
 });
 cores.push({
@@ -202,7 +202,7 @@ cores.push({
     foreEll(0.18, -0.004, 0.0, [0.046, 0.085, 0.04]),
     foreEll(0.52, 0.0, 0.0, [0.034, 0.11, 0.031]),
     foreEll(0.88, 0.003, 0.0, [0.0205, 0.07, 0.027]),
-    cone(fore(0.06, 0.004, -0.032), fore(0.9, 0.01, -0.02), 0.012, 0.008), // subcutaneous border of the ulna
+    named('ulnarBorder', cone(fore(0.06, 0.004, -0.032), fore(0.9, 0.01, -0.02), 0.012, 0.008)),
   ],
 });
 

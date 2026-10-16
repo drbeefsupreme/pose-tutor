@@ -1,4 +1,4 @@
-import type { CoreDef, FatDeposit, MuscleDef, VeinDef } from '../types';
+import type { BoneName, CoreDef, FatDeposit, MuscleDef, VeinDef } from '../types';
 import { P, B, ell, cone, regionModule } from './common';
 
 const muscles: MuscleDef[] = [];
@@ -7,6 +7,10 @@ const veins: VeinDef[] = [];
 const fat: FatDeposit[] = [];
 
 // Sizes in this file are final half-widths (region scale 1).
+
+const SHEET_MIDLINE_OVERLAP = 0.005;
+const LOWER_TRAP_MIDLINE_OVERLAP = 0.008;
+const pastMidline = (bone: BoneName, overlap: number, y: number, z: number) => P(bone, -overlap, y, z);
 
 // --- Trapezius: a kite from the occiput to T12 and out to the clavicle, acromion and scapular spine.
 // Upper fibers run down-lateral over the shoulder, middle fibers run horizontal, lower fibers run up-lateral.
@@ -18,9 +22,9 @@ muscles.push({
     B([P('neck', 0.0, 1.538, -0.104), P('scap', 0.075, 1.525, -0.095), P('scap', 0.15, 1.507, -0.064), P('scap', 0.205, 1.5, -0.03)], 0.02, 0.028, 0.012, 0.4, 0.8, [0.1, 1, -0.6], 'up'),
     B([P('chest', 0.0, 1.478, -0.114), P('scap', 0.09, 1.482, -0.118), P('scap', 0.185, 1.487, -0.068)], 0.02, 0.026, 0.012, 0.4, 0.6, [0.1, 0.5, -1], 'mid'),
     B([P('chest', 0.0, 1.425, -0.122), P('scap', 0.07, 1.447, -0.126), P('scap', 0.14, 1.465, -0.1)], 0.016, 0.026, 0.012, 0.4, 0.5, [0.1, 0.2, -1], 'mid'),
-    B([P('chest', -0.008, 1.35, -0.124), P('chest', 0.05, 1.408, -0.127), P('scap', 0.1, 1.445, -0.124)], 0.024, 0.027, 0.012, 0.3, 0.42, [0, 0, -1], 'low'),
-    B([P('chest', -0.008, 1.272, -0.125), P('chest', 0.045, 1.36, -0.13), P('scap', 0.09, 1.44, -0.127)], 0.025, 0.027, 0.011, 0.3, 0.4, [0, 0, -1], 'low'),
-    B([P('chest', -0.008, 1.198, -0.121), P('chest', 0.035, 1.29, -0.13), P('scap', 0.082, 1.433, -0.128)], 0.02, 0.025, 0.01, 0.3, 0.38, [0, 0, -1], 'low'),
+    B([pastMidline('chest', LOWER_TRAP_MIDLINE_OVERLAP, 1.35, -0.124), P('chest', 0.05, 1.408, -0.127), P('scap', 0.1, 1.445, -0.124)], 0.024, 0.027, 0.012, 0.3, 0.42, [0, 0, -1], 'low'),
+    B([pastMidline('chest', LOWER_TRAP_MIDLINE_OVERLAP, 1.272, -0.125), P('chest', 0.045, 1.36, -0.13), P('scap', 0.09, 1.44, -0.127)], 0.025, 0.027, 0.011, 0.3, 0.4, [0, 0, -1], 'low'),
+    B([pastMidline('chest', LOWER_TRAP_MIDLINE_OVERLAP, 1.198, -0.121), P('chest', 0.035, 1.29, -0.13), P('scap', 0.082, 1.433, -0.128)], 0.02, 0.025, 0.01, 0.3, 0.38, [0, 0, -1], 'low'),
   ],
 });
 // Tendinous diamond of the trapezius around C7-T1 (flat aponeurosis, a shallow depression with the C7 tip in it).
@@ -47,9 +51,9 @@ cores.push({
 muscles.push({
   name: 'rhomboid', region: 'back', sep: 0.35, intra: 0.2,
   bundles: [
-    B([P('chest', -0.005, 1.49, -0.106), P('scap', 0.04, 1.47, -0.112), P('scap', 0.078, 1.44, -0.114)], 0.012, 0.016, 0.012, 0.5, 0.6, [0, 0.2, -1], 'min'),
-    B([P('chest', -0.005, 1.455, -0.11), P('scap', 0.045, 1.415, -0.118), P('scap', 0.085, 1.385, -0.118)], 0.014, 0.02, 0.014, 0.5, 0.6, [0, 0, -1], 'maj'),
-    B([P('chest', -0.005, 1.41, -0.112), P('scap', 0.05, 1.37, -0.12), P('scap', 0.098, 1.335, -0.116)], 0.014, 0.02, 0.013, 0.5, 0.6, [0, 0, -1], 'maj'),
+    B([pastMidline('chest', SHEET_MIDLINE_OVERLAP, 1.49, -0.106), P('scap', 0.04, 1.47, -0.112), P('scap', 0.078, 1.44, -0.114)], 0.012, 0.016, 0.012, 0.5, 0.6, [0, 0.2, -1], 'min'),
+    B([pastMidline('chest', SHEET_MIDLINE_OVERLAP, 1.455, -0.11), P('scap', 0.045, 1.415, -0.118), P('scap', 0.085, 1.385, -0.118)], 0.014, 0.02, 0.014, 0.5, 0.6, [0, 0, -1], 'maj'),
+    B([pastMidline('chest', SHEET_MIDLINE_OVERLAP, 1.41, -0.112), P('scap', 0.05, 1.37, -0.12), P('scap', 0.098, 1.335, -0.116)], 0.014, 0.02, 0.013, 0.5, 0.6, [0, 0, -1], 'maj'),
   ],
 });
 
@@ -77,9 +81,9 @@ muscles.push({
 muscles.push({
   name: 'lat', region: 'back', sep: 0.85, intra: 0.25, k: 0.02,
   bundles: [
-    B([P('chest', -0.005, 1.32, -0.116), P('chest', 0.051, 1.316, -0.128), P('scap', 0.104, 1.312, -0.114), P('chest', 0.146, 1.318, -0.081), P('upperarm', 0.175, 1.333, -0.08), P('upperarm', 0.198, 1.356, -0.048), P('upperarm', 0.206, 1.378, -0.025)],
+    B([pastMidline('chest', SHEET_MIDLINE_OVERLAP, 1.32, -0.116), P('chest', 0.051, 1.316, -0.128), P('scap', 0.104, 1.312, -0.114), P('chest', 0.146, 1.318, -0.081), P('upperarm', 0.175, 1.333, -0.08), P('upperarm', 0.198, 1.356, -0.048), P('upperarm', 0.206, 1.378, -0.025)],
       0.022, 0.03, 0.014, 0.5, 0.45, [0.3, 0, -1], 'up'),
-    B([P('chest', -0.005, 1.27, -0.119), P('chest', 0.062, 1.268, -0.132), P('chest', 0.119, 1.27, -0.113), P('chest', 0.155, 1.283, -0.082), P('chest', 0.183, 1.305, -0.058), P('upperarm', 0.203, 1.34, -0.032), P('upperarm', 0.207, 1.375, -0.015)],
+    B([pastMidline('chest', SHEET_MIDLINE_OVERLAP, 1.27, -0.119), P('chest', 0.062, 1.268, -0.132), P('chest', 0.119, 1.27, -0.113), P('chest', 0.155, 1.283, -0.082), P('chest', 0.183, 1.305, -0.058), P('upperarm', 0.203, 1.34, -0.032), P('upperarm', 0.207, 1.375, -0.015)],
       0.024, 0.036, 0.014, 0.5, 0.5, [0.5, 0, -1], 'up'),
     B([P('chest', 0.035, 1.22, -0.123), P('chest', 0.078, 1.215, -0.126), P('chest', 0.134, 1.228, -0.102), P('chest', 0.165, 1.25, -0.066), P('chest', 0.192, 1.285, -0.035), P('upperarm', 0.208, 1.33, -0.015), P('upperarm', 0.208, 1.372, -0.005)],
       0.01, 0.036, 0.014, 0.45, 0.55, [0.65, 0, -0.85], 'up'),

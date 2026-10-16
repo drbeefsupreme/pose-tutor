@@ -1,5 +1,5 @@
 import type { BoneName, BPt, Bundle, CoreDef, CorePrim, FatDeposit, MuscleDef, V3, VeinDef } from '../types';
-import { P, B, ell, cone, arm, regionModule } from './common';
+import { P, B, ell, cone, named, arm, regionModule } from './common';
 
 const muscles: MuscleDef[] = [];
 const cores: CoreDef[] = [];
@@ -123,6 +123,9 @@ muscles.push({
 // is the midline strip (`lineaAlba` core) between the two columns, where `sep` cuts a soft valley;
 // the intersections are the grooves where blocks of one column meet.
 {
+  const VISIBLE_TOP_HALF_WIDTHS = 0.85;
+  const ONE_BUNDLE_SPAN_HALF_WIDTHS = 2 * VISIBLE_TOP_HALF_WIDTHS;
+  const TWO_BUNDLE_SPAN_HALF_WIDTHS = 2.4;
   // [yTop, yBottom, visible medial edge x, visible lateral edge x at top, at bottom]
   const rows: [number, number, number, number, number][] = [
     [1.268, 1.212, 0.011, 0.084, 0.083],
@@ -140,11 +143,14 @@ muscles.push({
     };
     let bundles: Bundle[];
     if (lower) {
-      const wa = (xl0 - xm) / 1.7, wb = (xl1 - xm) / 1.7;
-      bundles = [bundle(xm + 0.85 * wa, xm + 0.85 * wb, wa, wb, 0.8, 0.55, -0.011)];
+      const wa = (xl0 - xm) / ONE_BUNDLE_SPAN_HALF_WIDTHS, wb = (xl1 - xm) / ONE_BUNDLE_SPAN_HALF_WIDTHS;
+      bundles = [bundle(xm + VISIBLE_TOP_HALF_WIDTHS * wa, xm + VISIBLE_TOP_HALF_WIDTHS * wb, wa, wb, 0.8, 0.55, -0.011)];
     } else {
-      const wa = (xl0 - xm) / 2.4, wb = (xl1 - xm) / 2.4;
-      bundles = [bundle(xm + 0.85 * wa, xm + 0.85 * wb, wa, wb, 0.5, 0.85, -0.011), bundle(xl0 - 0.85 * wa, xl1 - 0.85 * wb, wa, wb, 1, 0.85, -0.013)];
+      const wa = (xl0 - xm) / TWO_BUNDLE_SPAN_HALF_WIDTHS, wb = (xl1 - xm) / TWO_BUNDLE_SPAN_HALF_WIDTHS;
+      bundles = [
+        bundle(xm + VISIBLE_TOP_HALF_WIDTHS * wa, xm + VISIBLE_TOP_HALF_WIDTHS * wb, wa, wb, 0.5, 0.85, -0.011),
+        bundle(xl0 - VISIBLE_TOP_HALF_WIDTHS * wa, xl1 - VISIBLE_TOP_HALF_WIDTHS * wb, wa, wb, 1, 0.85, -0.013),
+      ];
     }
     muscles.push({ name: `abs${i}`, region: 'abs', sep: 1.0, intra: 0, k: 0.018, bundles });
   });
@@ -175,15 +181,15 @@ cores.push({
   cores.push({
     name: 'head', region: 'head', k: 0.016, sep: 0,
     prims: [
-      ell(h(0, 1.706, -0.016), [0.077, 0.079, 0.094]),            // cranium
-      ell(h(0, 1.712, 0.032), [0.064, 0.052, 0.056]),              // forehead
-      ell(h(0, 1.682, 0.068), [0.05, 0.011, 0.016]),               // soft brow plane
-      ell(h(0, 1.635, 0.04), [0.057, 0.05, 0.05]),                 // mid-face
-      ell(h(0, 1.594, 0.044), [0.046, 0.032, 0.04]),               // lower face
-      ...pair((s) => cone(h(0.056 * s, 1.6, -0.012), h(0.022 * s, 1.563, 0.056), 0.013, 0.012)), // jawline
-      ell(h(0, 1.559, 0.064), [0.021, 0.014, 0.014]),              // chin
-      ell(h(0, 1.647, 0.08), [0.0075, 0.024, 0.0095], [-22, 0, 0]), // nose
-      ...pair((s) => ell(h(0.075 * s, 1.655, -0.016), [0.0085, 0.027, 0.016], [-10, 0, 0])), // ears
+      named('cranium', ell(h(0, 1.706, -0.016), [0.077, 0.079, 0.094])),
+      named('forehead', ell(h(0, 1.712, 0.032), [0.064, 0.052, 0.056])),
+      named('browPlane', ell(h(0, 1.682, 0.068), [0.05, 0.011, 0.016])),
+      named('midFace', ell(h(0, 1.635, 0.04), [0.057, 0.05, 0.05])),
+      named('lowerFace', ell(h(0, 1.594, 0.044), [0.046, 0.032, 0.04])),
+      ...pair((s) => named('jawline', cone(h(0.056 * s, 1.6, -0.012), h(0.022 * s, 1.563, 0.056), 0.013, 0.012))),
+      named('chin', ell(h(0, 1.559, 0.064), [0.021, 0.014, 0.014])),
+      named('nose', ell(h(0, 1.647, 0.08), [0.0075, 0.024, 0.0095], [-22, 0, 0])),
+      ...pair((s) => named('ear', ell(h(0.075 * s, 1.655, -0.016), [0.0085, 0.027, 0.016], [-10, 0, 0]))),
     ],
   });
 }

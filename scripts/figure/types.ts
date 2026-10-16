@@ -44,10 +44,10 @@ export interface MuscleDef {
 }
 
 export type CorePrim =
-  | { kind: 'cone'; a: BPt; b: BPt; ra: number; rb: number; neg?: boolean }
-  | { kind: 'ell'; c: BPt; r: V3; rot?: V3; neg?: boolean }
+  | { kind: 'cone'; a: BPt; b: BPt; ra: number; rb: number; neg?: boolean; name?: string }
+  | { kind: 'ell'; c: BPt; r: V3; rot?: V3; neg?: boolean; name?: string }
   /** Midline torso loft: horizontal ellipses [y, cx, cz, halfWidth, halfDepth]. Not posed. */
-  | { kind: 'loft'; levels: [number, number, number, number, number][]; neg?: boolean };
+  | { kind: 'loft'; levels: [number, number, number, number, number][]; neg?: boolean; name?: string };
 
 export interface CoreDef {
   name: string;
