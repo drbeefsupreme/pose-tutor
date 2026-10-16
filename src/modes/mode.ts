@@ -1,5 +1,5 @@
 import type { PoseLandmarks } from '../pose/landmarks';
-import { SCHEDULER, startSession, type FramingReason, type HitResult, type SchedulerConfig, type SessionEvent, type SessionState, type Sighting } from '../pose/session';
+import { SCHEDULER, startSession, type FramingReason, type HitResult, type SessionEvent, type SessionState, type Sighting } from '../pose/session';
 import type { FigurePose, PoseId } from '../pose/types';
 import type { CallResult } from './judge';
 
@@ -81,8 +81,8 @@ export function spoken(events: readonly SessionEvent[]): Effect[] {
 }
 
 /** A new cue scheduler session that stays quiet while `text` (said by the mode) is spoken. */
-export function sessionAfter(text: string, now: number, config: SchedulerConfig = SCHEDULER): SessionState {
-  return { ...startSession(now), busyUntil: now + config.msPerWord * text.split(' ').length };
+export function sessionAfter(text: string, now: number): SessionState {
+  return { ...startSession(now), busyUntil: now + SCHEDULER.msPerWord * text.split(' ').length };
 }
 
 /** The stage of a cue scheduler session that has not hit yet. */

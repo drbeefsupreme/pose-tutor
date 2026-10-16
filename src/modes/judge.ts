@@ -1,4 +1,4 @@
-import { advance, SCHEDULER, type SchedulerConfig, type SessionState } from '../pose/session';
+import { advance, SCHEDULER, type SessionState } from '../pose/session';
 import { POSE_LABELS } from '../progress/format';
 import type { PoseId } from '../pose/types';
 import { say, sessionAfter, sessionStage, spoken, type Effect, type Mode, type Step, type Summary } from './mode';
@@ -39,7 +39,6 @@ export const JUDGE_CALLS: Record<PoseId, string> = {
 };
 
 export interface JudgeConfig {
-  readonly scheduler: SchedulerConfig;
   readonly order: readonly PoseId[];
   /** Time to hit each call. */
   readonly limitMs: number;
@@ -47,7 +46,7 @@ export interface JudgeConfig {
   readonly restMs: number;
 }
 
-export const JUDGE: JudgeConfig = { scheduler: SCHEDULER, order: JUDGE_ORDER, limitMs: 25_000, restMs: 2500 };
+export const JUDGE: JudgeConfig = { order: JUDGE_ORDER, limitMs: 25_000, restMs: 2500 };
 
 /** One call: `score` is the hold's mean on a hit, else the best score seen; `timeMs` runs from the call to the hold. */
 export interface CallResult {
@@ -72,12 +71,12 @@ export function judgeSummary(results: readonly CallResult[], total: number): Ext
 }
 
 export function judgeMode(config: JudgeConfig = JUDGE): Mode<JudgeState> {
-  const { order, scheduler } = config;
+  const { order } = config;
 
   const call = (results: readonly CallResult[], now: number): Step<JudgeState> => {
     const text = JUDGE_CALLS[order[results.length]];
     return {
-      state: { results, stage: { kind: 'call', since: now, session: sessionAfter(text, now, scheduler), best: undefined } },
+      state: { results, stage: { kind: 'call', since: now, session: sessionAfter(text, now), best: undefined } },
       effects: [say(text, true)],
     };
   };
@@ -111,7 +110,7 @@ export function judgeMode(config: JudgeConfig = JUDGE): Mode<JudgeState> {
         return close([...results, { pose, outcome: 'timeout', score: stage.best, timeMs: config.limitMs }], now, [say('Time.', true)]);
       }
       if (sighting === undefined) return { state, effects: [] };
-      const { state: session, events } = advance(stage.session, sighting, now, scheduler);
+      const { state: session, events } = advance(stage.session, sighting, now);
       const effects = spoken(events);
       const hit = events.find((e) => e.kind === 'hit');
       if (hit) {
@@ -139,7 +138,7 @@ export function judgeMode(config: JudgeConfig = JUDGE): Mode<JudgeState> {
           return {
             ...base,
             scoring: pose,
-            stage: sessionStage(stage.session, now, scheduler.holdMs),
+            stage: sessionStage(stage.session, now, SCHEDULER.holdMs),
             clock: { label: 'Time left', ms: Math.max(0, config.limitMs - (now - stage.since)) },
           };
         case 'rest':

@@ -1,4 +1,4 @@
-import { advance, SCHEDULER, type HitResult, type SchedulerConfig, type SessionState } from '../pose/session';
+import { advance, SCHEDULER, type HitResult, type SessionState } from '../pose/session';
 import { POSE_SPECS } from '../pose/spec';
 import type { PoseId } from '../pose/types';
 import { say, sessionAfter, sessionStage, spoken, type Mode, type Step } from './mode';
@@ -16,12 +16,12 @@ export interface LearnState {
 
 const PRACTICE_SAY = 'Now hit the pose.';
 
-export function learnMode(pose: PoseId, config: SchedulerConfig = SCHEDULER): Mode<LearnState> {
+export function learnMode(pose: PoseId): Mode<LearnState> {
   const spec = POSE_SPECS[pose][0];
   const steps = spec.buildUp;
 
   const practice = (now: number): Step<LearnState> => ({
-    state: { pose, stage: { kind: 'practice', session: sessionAfter(PRACTICE_SAY, now, config) } },
+    state: { pose, stage: { kind: 'practice', session: sessionAfter(PRACTICE_SAY, now) } },
     effects: [say(PRACTICE_SAY, true)],
   });
 
@@ -35,7 +35,7 @@ export function learnMode(pose: PoseId, config: SchedulerConfig = SCHEDULER): Mo
     start: (now) => (steps.length > 0 ? step(0, `${spec.name}, step by step. `) : practice(now)),
     frame(state, { now, sighting }) {
       if (state.stage.kind !== 'practice' || sighting === undefined) return { state, effects: [] };
-      const { state: session, events } = advance(state.stage.session, sighting, now, config);
+      const { state: session, events } = advance(state.stage.session, sighting, now);
       const effects = spoken(events);
       const hit = events.find((e) => e.kind === 'hit');
       if (!hit) return { state: { pose, stage: { kind: 'practice', session } }, effects };
@@ -65,7 +65,7 @@ export function learnMode(pose: PoseId, config: SchedulerConfig = SCHEDULER): Mo
             stage: { kind: 'step', index: stage.index, count: steps.length, text: steps[stage.index] },
           };
         case 'practice':
-          return { ...base, detail: 'Free correction', stage: sessionStage(stage.session, now, config.holdMs) };
+          return { ...base, detail: 'Free correction', stage: sessionStage(stage.session, now, SCHEDULER.holdMs) };
         case 'done':
           return { ...base, detail: undefined, stage: { kind: 'done', summary: { mode: 'learn', pose, result: stage.result } } };
       }

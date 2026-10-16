@@ -1,22 +1,17 @@
-import { advance, SCHEDULER, type SchedulerConfig, type SessionState } from '../pose/session';
+import { advance, SCHEDULER, type SessionState } from '../pose/session';
 import { POSE_SPECS } from '../pose/spec';
 import type { PoseId } from '../pose/types';
 import { say, sessionAfter, sessionStage, spoken, type Effect, type HoldResult, type Mode, type Step } from './mode';
 
 // Hold drill: the cue scheduler coaches the athlete into the pose, then the pose must be held for the goal time.
-// The score may dip below the hold line for up to `graceMs`; a longer dip, or losing the athlete, restarts the hold.
+// The score may dip below the hold line for up to `GRACE_MS`; a longer dip, or losing the athlete, restarts the hold.
 // The result is the mean score over the hold and its standard deviation (steadiness).
 
 export const HOLD_GOALS_S = [10, 20, 30] as const;
 export type HoldGoal = (typeof HOLD_GOALS_S)[number];
 
-export interface HoldConfig {
-  readonly scheduler: SchedulerConfig;
-  /** How long the score may stay under the hold line before the hold restarts. */
-  readonly graceMs: number;
-}
-
-export const HOLD: HoldConfig = { scheduler: SCHEDULER, graceMs: 1000 };
+/** How long the score may stay under the hold line before the hold restarts. */
+const GRACE_MS = 1000;
 
 interface Stats {
   readonly n: number;
@@ -52,16 +47,15 @@ function marks(goalMs: number): { readonly atMs: number; readonly text: string }
   ];
 }
 
-export function holdMode(pose: PoseId, goalS: HoldGoal, config: HoldConfig = HOLD): Mode<HoldState> {
+export function holdMode(pose: PoseId, goalS: HoldGoal): Mode<HoldState> {
   const spec = POSE_SPECS[pose][0];
   const goalMs = goalS * 1000;
-  const { scheduler } = config;
-  const line = scheduler.hitScore - scheduler.holdSlack;
+  const line = SCHEDULER.hitScore - SCHEDULER.holdSlack;
   const calls = marks(goalMs);
   const holdSay = `Hold it for ${goalS} seconds.`;
 
   const approach = (startedAt: number, resets: number, text: string, now: number): Step<HoldState> => ({
-    state: { startedAt, resets, stage: { kind: 'approach', session: sessionAfter(text, now, scheduler) } },
+    state: { startedAt, resets, stage: { kind: 'approach', session: sessionAfter(text, now) } },
     effects: [say(text, true)],
   });
 
@@ -88,7 +82,7 @@ export function holdMode(pose: PoseId, goalS: HoldGoal, config: HoldConfig = HOL
       const { stage } = state;
       if (stage.kind === 'done' || sighting === undefined) return { state, effects: [] };
       if (stage.kind === 'approach') {
-        const { state: session, events } = advance(stage.session, sighting, now, { ...scheduler, holdMs: Infinity });
+        const { state: session, events } = advance(stage.session, sighting, now, { ...SCHEDULER, holdMs: Infinity });
         const holding = events.find((e) => e.kind === 'holding');
         const score = sighting.kind === 'body' ? sighting.score.score : undefined;
         if (!holding || score === undefined) return { state: { ...state, stage: { kind: 'approach', session } }, effects: spoken(events) };
@@ -103,7 +97,7 @@ export function holdMode(pose: PoseId, goalS: HoldGoal, config: HoldConfig = HOL
       const stats =
         score === undefined ? stage.stats : { n: stage.stats.n + 1, sum: stage.stats.sum + score, sumSq: stage.stats.sumSq + score * score, last: score };
       const below = score !== undefined && score >= line ? undefined : (stage.below ?? now);
-      if (below !== undefined && now - below > config.graceMs) return approach(state.startedAt, state.resets + 1, LOST_SAY, now);
+      if (below !== undefined && now - below > GRACE_MS) return approach(state.startedAt, state.resets + 1, LOST_SAY, now);
       const heldMs = now - stage.since;
       if (heldMs >= goalMs) return finish(state, stats, stage.since);
       const effects: Effect[] = [];
