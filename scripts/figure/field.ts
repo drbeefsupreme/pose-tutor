@@ -1,22 +1,53 @@
 import { POSES, solvePose, posePt, applyDir, JOINTS, skinSlot } from './skeleton';
 import type { Anatomy, FieldState, V3, MuscleDef, CoreDef } from './types';
 
-const KIND_SPINDLE = 0, KIND_CONE = 1, KIND_ELL = 2, KIND_LOFT = 3;
 const LOFT_SLOTS = [skinSlot('pelvis', 1), skinSlot('lumbar', 1), skinSlot('chest', 1)];
+const SMOOTH_STEPS = 5;
+const SWEEP_STRIDE = 10;
+const SWEEP_T = 9;
+const GROOVE_HALF_WIDTH = 0.007;
+const DISTANCE_GAP_PER_BORDER_DISTANCE = 2;
+const GROOVE_GAP_SCALE = DISTANCE_GAP_PER_BORDER_DISTANCE * GROOVE_HALF_WIDTH;
 
-interface Prim {
-  kind: number;
+interface Skinned {
+  skinSlots: number[];
+  skinSlotT: number[];
+}
+
+interface SpindlePrim extends Skinned {
+  kind: 'spindle';
+  neg: false;
+  // sweep: per vertex [px py pz tx ty tz ux uy uz t]
+  sweep: Float64Array; n: number;
+  r0: number; rp: number; r1: number; tp: number; bulge: number; dr: number;
+  head: number;
+}
+
+interface ConePrim extends Skinned {
+  kind: 'cone';
   neg: boolean;
   ax: number; ay: number; az: number;
   bx: number; by: number; bz: number;
   ra: number; rb: number;
-  // sweep: per vertex [px py pz tx ty tz ux uy uz t]
-  sw: Float64Array; n: number;
-  r0: number; rp: number; r1: number; tp: number; b: number; dr: number;
-  head: number;
-  m: number[]; rx: number; ry: number; rz: number;
-  cs: number[]; ct: number[];
 }
+
+interface LoftPrim {
+  kind: 'loft';
+  neg: boolean;
+  levels: Float64Array; n: number;
+}
+
+interface EllipsoidPrim extends Skinned {
+  kind: 'ell';
+  neg: boolean;
+  cx: number; cy: number; cz: number;
+  inverseRotation: number[];
+  rx: number; ry: number; rz: number;
+}
+
+type Prim = SpindlePrim | ConePrim | LoftPrim | EllipsoidPrim;
+
+interface Fiber { t: number }
 
 interface Part {
   id: number;
@@ -54,18 +85,12 @@ function eulerMatrix(rot: V3): number[] {
   ];
 }
 
-function blankPrim(): Prim {
-  return {
-    kind: 0, neg: false, ax: 0, ay: 0, az: 0, bx: 0, by: 0, bz: 0, ra: 0, rb: 0,
-    sw: new Float64Array(0), n: 0, r0: 0, rp: 0, r1: 0, tp: 0.5, b: 2, dr: 1,
-    head: 0, m: [1, 0, 0, 0, 1, 0, 0, 0, 1], rx: 1, ry: 1, rz: 1, cs: [], ct: [],
-  };
-}
+const smoothedIndex = (k: number, ctrlCount: number) => (ctrlCount < 3 ? k : k * SMOOTH_STEPS);
 
 function smoothPath(ctrl: V3[]): V3[] {
   if (ctrl.length < 3) return ctrl;
   const out: V3[] = [];
-  const per = 5;
+  const per = SMOOTH_STEPS;
   for (let i = 0; i < ctrl.length - 1; i++) {
     const p0 = ctrl[Math.max(0, i - 1)], p1 = ctrl[i], p2 = ctrl[i + 1], p3 = ctrl[Math.min(ctrl.length - 1, i + 2)];
     for (let s = 0; s < per; s++) {
@@ -77,106 +102,118 @@ function smoothPath(ctrl: V3[]): V3[] {
   return out;
 }
 
-function profile(p: Prim, t: number): number {
+function profile(p: SpindlePrim, t: number): number {
   if (t < p.tp) {
     const x = t / p.tp;
-    return p.r0 + (p.rp - p.r0) * (1 - Math.pow(1 - x, p.b));
+    return p.r0 + (p.rp - p.r0) * (1 - Math.pow(1 - x, p.bulge));
   }
   const x = (1 - t) / (1 - p.tp);
-  return p.r1 + (p.rp - p.r1) * (1 - Math.pow(1 - x, p.b));
+  return p.r1 + (p.rp - p.r1) * (1 - Math.pow(1 - x, p.bulge));
 }
 
-let lastT = 0;
+const UNUSED_FIBER: Fiber = { t: 0 };
 
-function evalPrim(p: Prim, x: number, y: number, z: number): number {
-  if (p.kind === KIND_SPINDLE) {
-    const sw = p.sw, n = p.n;
-    let best = 1e30, bi = 0, bs = 0, braw = 0;
-    for (let i = 0; i < n - 1; i++) {
-      const o = i * 10, o2 = o + 10;
-      const ax = sw[o], ay = sw[o + 1], az = sw[o + 2];
-      const abx = sw[o2] - ax, aby = sw[o2 + 1] - ay, abz = sw[o2 + 2] - az;
-      const l2 = abx * abx + aby * aby + abz * abz;
-      const raw = ((x - ax) * abx + (y - ay) * aby + (z - az) * abz) / l2;
-      const s = raw < 0 ? 0 : raw > 1 ? 1 : raw;
-      const dx = x - ax - abx * s, dy = y - ay - aby * s, dz = z - az - abz * s;
-      const d2 = dx * dx + dy * dy + dz * dz;
-      if (d2 < best) { best = d2; bi = i; bs = s; braw = raw; }
-    }
-    const o = bi * 10, o2 = o + 10;
-    const cx = sw[o] + (sw[o2] - sw[o]) * bs, cy = sw[o + 1] + (sw[o2 + 1] - sw[o + 1]) * bs, cz = sw[o + 2] + (sw[o2 + 2] - sw[o + 2]) * bs;
-    let tx = sw[o + 3] + (sw[o2 + 3] - sw[o + 3]) * bs, ty = sw[o + 4] + (sw[o2 + 4] - sw[o + 4]) * bs, tz = sw[o + 5] + (sw[o2 + 5] - sw[o + 5]) * bs;
-    const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
-    let ux = sw[o + 6] + (sw[o2 + 6] - sw[o + 6]) * bs, uy = sw[o + 7] + (sw[o2 + 7] - sw[o + 7]) * bs, uz = sw[o + 8] + (sw[o2 + 8] - sw[o + 8]) * bs;
-    const ud = ux * tx + uy * ty + uz * tz;
-    ux -= tx * ud; uy -= ty * ud; uz -= tz * ud;
-    const ul = Math.hypot(ux, uy, uz) || 1; ux /= ul; uy /= ul; uz /= ul;
-    const wx = uy * tz - uz * ty, wy = uz * tx - ux * tz, wz = ux * ty - uy * tx;
-    const vx = x - cx, vy = y - cy, vz = z - cz;
-    const lx = vx * wx + vy * wy + vz * wz;
-    const ly = vx * ux + vy * uy + vz * uz;
-    const atEnd = (bi === 0 && braw < 0) || (bi === n - 2 && braw > 1);
-    const lz = atEnd ? vx * tx + vy * ty + vz * tz : 0;
-    const t = sw[o + 9] + (sw[o2 + 9] - sw[o + 9]) * bs;
-    const rw = Math.max(profile(p, t), 1e-4);
-    const rd = rw * p.dr;
-    const rz = Math.min(rw, rd);
-    const k0 = Math.sqrt((lx / rw) ** 2 + (ly / rd) ** 2 + (lz / rz) ** 2);
-    const k1 = Math.sqrt((lx / (rw * rw)) ** 2 + (ly / (rd * rd)) ** 2 + (lz / (rz * rz)) ** 2);
-    lastT = t;
-    if (k1 < 1e-9) return -rz;
-    return (k0 * (k0 - 1)) / k1;
+function evalPrim(p: Prim, x: number, y: number, z: number, fiber: Fiber = UNUSED_FIBER): number {
+  switch (p.kind) {
+    case 'spindle': return evalSpindle(p, x, y, z, fiber);
+    case 'cone': return evalCone(p, x, y, z, fiber);
+    case 'loft': return evalLoft(p, x, y, z, fiber);
+    case 'ell': return evalEllipsoid(p, x, y, z, fiber);
   }
-  if (p.kind === KIND_CONE) {
-    // Inigo Quilez, round cone between arbitrary points.
-    const bax = p.bx - p.ax, bay = p.by - p.ay, baz = p.bz - p.az;
-    const l2 = bax * bax + bay * bay + baz * baz;
-    const rr = p.ra - p.rb;
-    const a2 = l2 - rr * rr;
-    const il2 = 1 / l2;
-    const pax = x - p.ax, pay = y - p.ay, paz = z - p.az;
-    const yy = pax * bax + pay * bay + paz * baz;
-    const zz = yy - l2;
-    const cx = pax * l2 - bax * yy, cy = pay * l2 - bay * yy, cz = paz * l2 - baz * yy;
-    const x2 = cx * cx + cy * cy + cz * cz;
-    const y2 = yy * yy * l2;
-    const z2 = zz * zz * l2;
-    const k = Math.sign(rr) * rr * rr * x2;
-    lastT = Math.min(1, Math.max(0, yy * il2));
-    if (Math.sign(zz) * a2 * z2 > k) return Math.sqrt(x2 + z2) * il2 - p.rb;
-    if (Math.sign(yy) * a2 * y2 < k) return Math.sqrt(x2 + y2) * il2 - p.ra;
-    return (Math.sqrt(x2 * a2 * il2) + yy * rr) * il2 - p.ra;
+}
+
+function evalSpindle(p: SpindlePrim, x: number, y: number, z: number, fiber: Fiber): number {
+  const sw = p.sweep, n = p.n;
+  let best = 1e30, bi = 0, bs = 0, braw = 0;
+  for (let i = 0; i < n - 1; i++) {
+    const o = i * SWEEP_STRIDE, o2 = o + SWEEP_STRIDE;
+    const ax = sw[o], ay = sw[o + 1], az = sw[o + 2];
+    const abx = sw[o2] - ax, aby = sw[o2 + 1] - ay, abz = sw[o2 + 2] - az;
+    const l2 = abx * abx + aby * aby + abz * abz;
+    const raw = ((x - ax) * abx + (y - ay) * aby + (z - az) * abz) / l2;
+    const s = raw < 0 ? 0 : raw > 1 ? 1 : raw;
+    const dx = x - ax - abx * s, dy = y - ay - aby * s, dz = z - az - abz * s;
+    const d2 = dx * dx + dy * dy + dz * dz;
+    if (d2 < best) { best = d2; bi = i; bs = s; braw = raw; }
   }
-  if (p.kind === KIND_LOFT) {
-    const sw = p.sw, n = p.n;
-    const y0 = sw[0], y1 = sw[(n - 1) * 5];
-    const yc = y < y0 ? y0 : y > y1 ? y1 : y;
-    let i = 0;
-    while (i < n - 2 && sw[(i + 1) * 5] <= yc) i++;
-    const t = (yc - sw[i * 5]) / (sw[(i + 1) * 5] - sw[i * 5]);
-    const i0 = Math.max(0, i - 1), i3 = Math.min(n - 1, i + 2);
-    const cr = (k: number) => {
-      const q0 = sw[i0 * 5 + k], q1 = sw[i * 5 + k], q2 = sw[(i + 1) * 5 + k], q3 = sw[i3 * 5 + k];
-      return 0.5 * (2 * q1 + (-q0 + q2) * t + (2 * q0 - 5 * q1 + 4 * q2 - q3) * t * t + (-q0 + 3 * q1 - 3 * q2 + q3) * t * t * t);
-    };
-    const cx = cr(1), cz = cr(2), a = cr(3), b = cr(4);
-    const lx = x - cx, lz = z - cz;
-    const k0 = Math.sqrt((lx / a) ** 2 + (lz / b) ** 2);
-    const k1 = Math.sqrt((lx / (a * a)) ** 2 + (lz / (b * b)) ** 2);
-    const d2 = k1 < 1e-9 ? -Math.min(a, b) : (k0 * (k0 - 1)) / k1;
-    const dy = Math.abs(y - yc);
-    lastT = 0.5;
-    return dy > 0 ? (d2 > 0 ? Math.hypot(d2, dy) : dy) : d2;
-  }
+  const o = bi * SWEEP_STRIDE, o2 = o + SWEEP_STRIDE;
+  const cx = sw[o] + (sw[o2] - sw[o]) * bs, cy = sw[o + 1] + (sw[o2 + 1] - sw[o + 1]) * bs, cz = sw[o + 2] + (sw[o2 + 2] - sw[o + 2]) * bs;
+  let tx = sw[o + 3] + (sw[o2 + 3] - sw[o + 3]) * bs, ty = sw[o + 4] + (sw[o2 + 4] - sw[o + 4]) * bs, tz = sw[o + 5] + (sw[o2 + 5] - sw[o + 5]) * bs;
+  const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
+  let ux = sw[o + 6] + (sw[o2 + 6] - sw[o + 6]) * bs, uy = sw[o + 7] + (sw[o2 + 7] - sw[o + 7]) * bs, uz = sw[o + 8] + (sw[o2 + 8] - sw[o + 8]) * bs;
+  const ud = ux * tx + uy * ty + uz * tz;
+  ux -= tx * ud; uy -= ty * ud; uz -= tz * ud;
+  const ul = Math.hypot(ux, uy, uz) || 1; ux /= ul; uy /= ul; uz /= ul;
+  const wx = uy * tz - uz * ty, wy = uz * tx - ux * tz, wz = ux * ty - uy * tx;
+  const vx = x - cx, vy = y - cy, vz = z - cz;
+  const lx = vx * wx + vy * wy + vz * wz;
+  const ly = vx * ux + vy * uy + vz * uz;
+  const atEnd = (bi === 0 && braw < 0) || (bi === n - 2 && braw > 1);
+  const lz = atEnd ? vx * tx + vy * ty + vz * tz : 0;
+  const t = sw[o + SWEEP_T] + (sw[o2 + SWEEP_T] - sw[o + SWEEP_T]) * bs;
+  const rw = Math.max(profile(p, t), 1e-4);
+  const rd = rw * p.dr;
+  const rz = Math.min(rw, rd);
+  const k0 = Math.sqrt((lx / rw) ** 2 + (ly / rd) ** 2 + (lz / rz) ** 2);
+  const k1 = Math.sqrt((lx / (rw * rw)) ** 2 + (ly / (rd * rd)) ** 2 + (lz / (rz * rz)) ** 2);
+  fiber.t = t;
+  if (k1 < 1e-9) return -rz;
+  return (k0 * (k0 - 1)) / k1;
+}
+
+function evalCone(p: ConePrim, x: number, y: number, z: number, fiber: Fiber): number {
+  // Inigo Quilez, round cone between arbitrary points.
+  const bax = p.bx - p.ax, bay = p.by - p.ay, baz = p.bz - p.az;
+  const l2 = bax * bax + bay * bay + baz * baz;
+  const rr = p.ra - p.rb;
+  const a2 = l2 - rr * rr;
+  const il2 = 1 / l2;
+  const pax = x - p.ax, pay = y - p.ay, paz = z - p.az;
+  const yy = pax * bax + pay * bay + paz * baz;
+  const zz = yy - l2;
+  const cx = pax * l2 - bax * yy, cy = pay * l2 - bay * yy, cz = paz * l2 - baz * yy;
+  const x2 = cx * cx + cy * cy + cz * cz;
+  const y2 = yy * yy * l2;
+  const z2 = zz * zz * l2;
+  const k = Math.sign(rr) * rr * rr * x2;
+  fiber.t = Math.min(1, Math.max(0, yy * il2));
+  if (Math.sign(zz) * a2 * z2 > k) return Math.sqrt(x2 + z2) * il2 - p.rb;
+  if (Math.sign(yy) * a2 * y2 < k) return Math.sqrt(x2 + y2) * il2 - p.ra;
+  return (Math.sqrt(x2 * a2 * il2) + yy * rr) * il2 - p.ra;
+}
+
+function evalLoft(p: LoftPrim, x: number, y: number, z: number, fiber: Fiber): number {
+  const sw = p.levels, n = p.n;
+  const y0 = sw[0], y1 = sw[(n - 1) * 5];
+  const yc = y < y0 ? y0 : y > y1 ? y1 : y;
+  let i = 0;
+  while (i < n - 2 && sw[(i + 1) * 5] <= yc) i++;
+  const t = (yc - sw[i * 5]) / (sw[(i + 1) * 5] - sw[i * 5]);
+  const i0 = Math.max(0, i - 1), i3 = Math.min(n - 1, i + 2);
+  const cr = (k: number) => {
+    const q0 = sw[i0 * 5 + k], q1 = sw[i * 5 + k], q2 = sw[(i + 1) * 5 + k], q3 = sw[i3 * 5 + k];
+    return 0.5 * (2 * q1 + (-q0 + q2) * t + (2 * q0 - 5 * q1 + 4 * q2 - q3) * t * t + (-q0 + 3 * q1 - 3 * q2 + q3) * t * t * t);
+  };
+  const cx = cr(1), cz = cr(2), a = cr(3), b = cr(4);
+  const lx = x - cx, lz = z - cz;
+  const k0 = Math.sqrt((lx / a) ** 2 + (lz / b) ** 2);
+  const k1 = Math.sqrt((lx / (a * a)) ** 2 + (lz / (b * b)) ** 2);
+  const d2 = k1 < 1e-9 ? -Math.min(a, b) : (k0 * (k0 - 1)) / k1;
+  const dy = Math.abs(y - yc);
+  fiber.t = 0.5;
+  return dy > 0 ? (d2 > 0 ? Math.hypot(d2, dy) : dy) : d2;
+}
+
+function evalEllipsoid(p: EllipsoidPrim, x: number, y: number, z: number, fiber: Fiber): number {
   // ellipsoid (IQ bound approximation)
-  const dx = x - p.ax, dy = y - p.ay, dz = z - p.az;
-  const m = p.m;
+  const dx = x - p.cx, dy = y - p.cy, dz = z - p.cz;
+  const m = p.inverseRotation;
   const lx = m[0] * dx + m[1] * dy + m[2] * dz;
   const ly = m[3] * dx + m[4] * dy + m[5] * dz;
   const lz = m[6] * dx + m[7] * dy + m[8] * dz;
   const k0 = Math.sqrt((lx / p.rx) ** 2 + (ly / p.ry) ** 2 + (lz / p.rz) ** 2);
   const k1 = Math.sqrt((lx / (p.rx * p.rx)) ** 2 + (ly / (p.ry * p.ry)) ** 2 + (lz / (p.rz * p.rz)) ** 2);
-  lastT = 0.5;
+  fiber.t = 0.5;
   if (k1 < 1e-9) return -Math.min(p.rx, p.ry, p.rz);
   return (k0 * (k0 - 1)) / k1;
 }
@@ -193,11 +230,10 @@ export interface VeinPath { pts: V3[]; r: number[] }
 
 export class Field {
   parts: Part[] = [];
-  veinPrims: Prim[] = [];
+  veinPrims: ConePrim[] = [];
   st: FieldState;
   kInter: number;
   grooveDepth: number;
-  grooveWidth: number;
   intraDepth: number;
   intraK: number;
   fat: { c: V3; ir: V3; a: number }[] = [];
@@ -213,7 +249,6 @@ export class Field {
     const fatAtt = 1 - 0.85 * st.fat;
     this.kInter = 0.009 + 0.012 * st.fat;
     this.grooveDepth = 0.0068 * st.sep * fatAtt;
-    this.grooveWidth = 0.014;
     this.intraDepth = 0.0036 * st.detail * fatAtt;
     this.intraK = 0.009 * st.fat;
     this.fatBase = 0.0035 * st.fat;
@@ -241,7 +276,7 @@ export class Field {
         const h = bd.head ?? 'main';
         let hid = heads.indexOf(h); if (hid < 0) { heads.push(h); hid = heads.length - 1; }
         const n = pts.length;
-        const sw = new Float64Array(n * 10);
+        const sw = new Float64Array(n * SWEEP_STRIDE);
         let acc = 0;
         for (let i = 0; i < n; i++) {
           const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
@@ -250,17 +285,15 @@ export class Field {
           if (len(u) < 1e-4) u = norm(cross(e, [0, 0, 1]));
           u = norm(u);
           if (i > 0) acc += segL[i - 1];
-          sw.set([pts[i][0], pts[i][1], pts[i][2], e[0], e[1], e[2], u[0], u[1], u[2], acc / L], i * 10);
+          sw.set([pts[i][0], pts[i][1], pts[i][2], e[0], e[1], e[2], u[0], u[1], u[2], acc / L], i * SWEEP_STRIDE);
         }
-        const p = blankPrim();
-        p.kind = KIND_SPINDLE;
-        p.sw = sw; p.n = n;
-        p.r0 = bd.r0; p.r1 = bd.r1;
-        p.rp = bd.rp * stretch;
-        p.tp = bd.tp; p.b = bd.bulge ?? 2; p.dr = bd.dr;
-        p.head = hid;
-        p.cs = bd.pts.map((q) => skinSlot(q.bone, side));
-        p.ct = bd.pts.map((_, k) => sw[(bd.pts.length >= 3 ? k * 5 : k) * 10 + 9]);
+        const p: SpindlePrim = {
+          kind: 'spindle', neg: false, sweep: sw, n,
+          r0: bd.r0, rp: bd.rp * stretch, r1: bd.r1, tp: bd.tp, bulge: bd.bulge ?? 2, dr: bd.dr,
+          head: hid,
+          skinSlots: bd.pts.map((q) => skinSlot(q.bone, side)),
+          skinSlotT: bd.pts.map((_, k) => sw[smoothedIndex(k, bd.pts.length) * SWEEP_STRIDE + SWEEP_T]),
+        };
         part.prims.push(p);
         const rmax = Math.max(p.r0, p.rp, p.r1);
         for (const q of pts) for (let c = 0; c < 3; c++) {
@@ -277,39 +310,37 @@ export class Field {
         min: [1e9, 1e9, 1e9], max: [-1e9, -1e9, -1e9],
       };
       for (const cp of c.prims) {
-        const p = blankPrim();
-        p.neg = !!cp.neg;
+        let p: Prim;
         if (cp.kind === 'cone') {
-          p.kind = KIND_CONE;
           const a = posePt(xf, cp.a, side), b = posePt(xf, cp.b, side);
-          p.ax = a[0]; p.ay = a[1]; p.az = a[2]; p.bx = b[0]; p.by = b[1]; p.bz = b[2];
-          p.ra = cp.ra; p.rb = cp.rb;
-          p.cs = [skinSlot(cp.a.bone, side), skinSlot(cp.b.bone, side)]; p.ct = [0, 1];
+          p = {
+            kind: 'cone', neg: !!cp.neg, ax: a[0], ay: a[1], az: a[2], bx: b[0], by: b[1], bz: b[2], ra: cp.ra, rb: cp.rb,
+            skinSlots: [skinSlot(cp.a.bone, side), skinSlot(cp.b.bone, side)], skinSlotT: [0, 1],
+          };
           const r = Math.max(cp.ra, cp.rb);
           if (!p.neg) for (const q of [a, b]) for (let k = 0; k < 3; k++) {
             part.min[k] = Math.min(part.min[k], q[k] - r); part.max[k] = Math.max(part.max[k], q[k] + r);
           }
         } else if (cp.kind === 'loft') {
-          p.kind = KIND_LOFT;
-          p.n = cp.levels.length;
-          p.sw = Float64Array.from(cp.levels.flat());
+          p = { kind: 'loft', neg: !!cp.neg, n: cp.levels.length, levels: Float64Array.from(cp.levels.flat()) };
           for (const [y, cx, cz, a, b] of cp.levels) {
             part.min[0] = Math.min(part.min[0], cx - a); part.max[0] = Math.max(part.max[0], cx + a);
             part.min[1] = Math.min(part.min[1], y - 0.02); part.max[1] = Math.max(part.max[1], y + 0.02);
             part.min[2] = Math.min(part.min[2], cz - b); part.max[2] = Math.max(part.max[2], cz + b);
           }
         } else {
-          p.kind = KIND_ELL;
           const c0 = posePt(xf, cp.c, side);
-          p.ax = c0[0]; p.ay = c0[1]; p.az = c0[2];
           const rot = cp.rot ?? [0, 0, 0];
           const rotS: V3 = side === 1 ? rot : [rot[0], -rot[1], -rot[2]];
           const R = eulerMatrix(rotS);
           const bx = xf(cp.c.bone, side);
           const cols: V3[] = [0, 1, 2].map((j) => applyDir(bx, [R[j], R[3 + j], R[6 + j]]));
-          p.m = [cols[0][0], cols[0][1], cols[0][2], cols[1][0], cols[1][1], cols[1][2], cols[2][0], cols[2][1], cols[2][2]];
-          p.rx = cp.r[0]; p.ry = cp.r[1]; p.rz = cp.r[2];
-          p.cs = [skinSlot(cp.c.bone, side)]; p.ct = [0];
+          p = {
+            kind: 'ell', neg: !!cp.neg, cx: c0[0], cy: c0[1], cz: c0[2],
+            inverseRotation: [cols[0][0], cols[0][1], cols[0][2], cols[1][0], cols[1][1], cols[1][2], cols[2][0], cols[2][1], cols[2][2]],
+            rx: cp.r[0], ry: cp.r[1], rz: cp.r[2],
+            skinSlots: [skinSlot(cp.c.bone, side)], skinSlotT: [0],
+          };
           const r = Math.max(...cp.r);
           if (!p.neg) for (let k = 0; k < 3; k++) {
             part.min[k] = Math.min(part.min[k], c0[k] - r); part.max[k] = Math.max(part.max[k], c0[k] + r);
@@ -339,12 +370,11 @@ export class Field {
     if (veins && st.vein > 0) {
       for (const v of veins) {
         for (let i = 1; i < v.pts.length; i++) {
-          const p = blankPrim();
-          p.kind = KIND_CONE;
           const a = v.pts[i - 1], b = v.pts[i];
-          p.ax = a[0]; p.ay = a[1]; p.az = a[2]; p.bx = b[0]; p.by = b[1]; p.bz = b[2];
-          p.ra = v.r[i - 1] * st.vein; p.rb = v.r[i] * st.vein;
-          this.veinPrims.push(p);
+          this.veinPrims.push({
+            kind: 'cone', neg: false, ax: a[0], ay: a[1], az: a[2], bx: b[0], by: b[1], bz: b[2],
+            ra: v.r[i - 1] * st.vein, rb: v.r[i] * st.vein, skinSlots: [], skinSlotT: [],
+          });
         }
       }
     }
@@ -407,7 +437,7 @@ export class Field {
       const di = evalPrim(p, x, y, z);
       if (p.neg) { dneg = Math.max(dneg, -di); continue; }
       d = i === 0 ? di : smin(d, di, part.k);
-      if (part.intra > 0) {
+      if (part.intra > 0 && p.kind === 'spindle') {
         if (p.head === h1) { if (di < dh1) dh1 = di; }
         else if (di < dh1) { dh2 = h1 >= 0 ? dh1 : dh2; dh1 = di; h1 = p.head; }
         else if (di < dh2) dh2 = di;
@@ -415,7 +445,7 @@ export class Field {
     }
     if (dneg > -1e9) d = smax(d, dneg, part.k);
     if (part.intra > 0 && dh2 < 1e8 && this.intraDepth > 0) {
-      const g = (dh2 - dh1) / (this.grooveWidth * 0.8);
+      const g = (dh2 - dh1) / (GROOVE_GAP_SCALE * 0.8);
       d += this.intraDepth * part.intra * Math.exp(-g * g);
     }
     return d;
@@ -472,7 +502,7 @@ export class Field {
         const s0 = this.parts[pid[i0]].sep;
         let best = 0;
         for (let j = i0 + 1; j < n; j++) {
-          const g = (pd[j] - pd[i0]) / this.grooveWidth;
+          const g = (pd[j] - pd[i0]) / GROOVE_GAP_SCALE;
           if (g > 3) break;
           const sj = this.parts[pid[j]].sep;
           if (sj <= 0) continue;
@@ -514,6 +544,7 @@ export class Field {
   }
 
   private skinScratch = new Float64Array(0);
+  private skinFiber: Fiber = { t: 0 };
 
   /** Skin weights at a point, one per SKIN_BONES slot. Returns false when no part is near. */
   boneWeights(x: number, y: number, z: number, out: Float64Array): boolean {
@@ -531,15 +562,15 @@ export class Field {
       const ds = this.skinScratch;
       let pmin = 1e9;
       for (let k = 0; k < n; k++) {
-        ds[k] = prims[k].neg ? 1e9 : evalPrim(prims[k], x, y, z);
-        ds[n + k] = lastT;
+        ds[k] = prims[k].neg ? 1e9 : evalPrim(prims[k], x, y, z, this.skinFiber);
+        ds[n + k] = this.skinFiber.t;
         pmin = Math.min(pmin, ds[k]);
       }
       for (let k = 0; k < n; k++) {
         const p = prims[k];
         const w = wPart * Math.exp(-(ds[k] - pmin) / 0.004);
         if (w < 1e-4) continue;
-        if (p.kind === KIND_LOFT) {
+        if (p.kind === 'loft') {
           const sl = Math.min(1, Math.max(0, (y - JOINTS.lumbar[1] + 0.04) / 0.08));
           const sc = Math.min(1, Math.max(0, (y - JOINTS.chest[1] + 0.04) / 0.08));
           out[LOFT_SLOTS[0]] += w * (1 - sl);
@@ -547,13 +578,13 @@ export class Field {
           out[LOFT_SLOTS[2]] += w * sc;
           continue;
         }
-        if (p.cs.length === 1) { out[p.cs[0]] += w; continue; }
+        if (p.skinSlots.length === 1) { out[p.skinSlots[0]] += w; continue; }
         const t = ds[n + k];
         let j = 0;
-        while (j < p.ct.length - 2 && t > p.ct[j + 1]) j++;
-        const u = Math.min(1, Math.max(0, (t - p.ct[j]) / Math.max(1e-6, p.ct[j + 1] - p.ct[j])));
-        out[p.cs[j]] += w * (1 - u);
-        out[p.cs[j + 1]] += w * u;
+        while (j < p.skinSlotT.length - 2 && t > p.skinSlotT[j + 1]) j++;
+        const u = Math.min(1, Math.max(0, (t - p.skinSlotT[j]) / Math.max(1e-6, p.skinSlotT[j + 1] - p.skinSlotT[j])));
+        out[p.skinSlots[j]] += w * (1 - u);
+        out[p.skinSlots[j + 1]] += w * u;
       }
     }
     let s = 0;
