@@ -1,7 +1,7 @@
 import type { BPt, BoneName, Bundle, CoreDef, CorePrim, FatDeposit, MuscleDef, Region, V3, VeinDef } from '../types';
 import { JOINTS } from '../skeleton';
 
-const P = (bone: BoneName, x: number, y: number, z: number): BPt => ({ bone, p: [x, y, z] });
+const P = (bone: BoneName, x: number, y: number, z: number): BPt => ({ bone, restPos: [x, y, z] });
 
 interface Frame { a: V3; e: V3; L: number; f: V3; lat: V3 }
 
@@ -23,7 +23,7 @@ const FORE = frame(E, W, [0, 0, 1]);
 function limb(fr: Frame, bone: BoneName, f: number, lat: number, ant: number): BPt {
   return {
     bone,
-    p: [
+    restPos: [
       fr.a[0] + fr.e[0] * fr.L * f + fr.lat[0] * lat + fr.f[0] * ant,
       fr.a[1] + fr.e[1] * fr.L * f + fr.lat[1] * lat + fr.f[1] * ant,
       fr.a[2] + fr.e[2] * fr.L * f + fr.lat[2] * lat + fr.f[2] * ant,

@@ -7,7 +7,7 @@ export type BoneName =
   | 'scap' | 'upperarm' | 'forearm' | 'hand'
   | 'thigh' | 'shin' | 'foot';
 
-export interface BPt { bone: BoneName; p: V3 }
+export interface BPt { bone: BoneName; restPos: V3 }
 
 export type Region =
   | 'head' | 'neck' | 'traps' | 'shoulders' | 'chest' | 'arms' | 'forearms'

@@ -1,5 +1,5 @@
 import { POSES, solvePose, posePt, applyDir, JOINTS, skinSlot } from './skeleton';
-import type { Anatomy, FieldState, V3, MuscleDef, CoreDef } from './types';
+import type { Anatomy, BPt, FieldState, V3, MuscleDef, CoreDef } from './types';
 
 const LOFT_SLOTS = [skinSlot('pelvis', 1), skinSlot('lumbar', 1), skinSlot('chest', 1)];
 const SMOOTH_STEPS = 5;
@@ -264,7 +264,7 @@ export class Field {
       const heads: string[] = [];
       m.bundles.forEach((bd) => {
         const ctrl = bd.pts.map((q) => posePt(xf, q, side));
-        const restCtrl = bd.pts.map((q) => [q.p[0] * side, q.p[1], q.p[2]] as V3);
+        const restCtrl = bd.pts.map((q) => [q.restPos[0] * side, q.restPos[1], q.restPos[2]] as V3);
         const pts = smoothPath(ctrl);
         const restPts = smoothPath(restCtrl);
         let L = 0, Lr = 0;
@@ -351,7 +351,7 @@ export class Field {
       this.parts.push(part);
     };
 
-    const isMid = (pts: { p: V3 }[]) => pts.every((q) => Math.abs(q.p[0]) < 1e-9);
+    const isMid = (pts: BPt[]) => pts.every((q) => Math.abs(q.restPos[0]) < 1e-9);
     for (const m of anat.muscles) {
       addMuscle(m, 1);
       if (!isMid(m.bundles.flatMap((b) => b.pts))) addMuscle(m, -1);
@@ -363,7 +363,7 @@ export class Field {
     }
     for (const f of anat.fat) {
       for (const side of [1, -1] as const) {
-        if (side === -1 && Math.abs(f.c.p[0]) < 1e-9) continue;
+        if (side === -1 && Math.abs(f.c.restPos[0]) < 1e-9) continue;
         this.fat.push({ c: posePt(xf, f.c, side), ir: [1 / f.r[0], 1 / f.r[1], 1 / f.r[2]], a: f.amount });
       }
     }

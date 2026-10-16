@@ -71,6 +71,14 @@ export function applyDir(m: M, p: V3): V3 {
 
 const ID: M = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0];
 
+function rotateAbout(r: number[], [jx, jy, jz]: V3): M {
+  return [
+    r[0], r[1], r[2], jx - (r[0] * jx + r[1] * jy + r[2] * jz),
+    r[3], r[4], r[5], jy - (r[3] * jx + r[4] * jy + r[5] * jz),
+    r[6], r[7], r[8], jz - (r[6] * jx + r[7] * jy + r[8] * jz),
+  ];
+}
+
 export function solvePose(pose: Pose): (bone: BoneName, side: 1 | -1) => M {
   const cache = new Map<string, M>();
   const get = (bone: BoneName, side: 1 | -1): M => {
@@ -81,16 +89,11 @@ export function solvePose(pose: Pose): (bone: BoneName, side: 1 | -1) => M {
     const parent = PARENT[bone];
     const pm = parent ? get(parent, side) : ID;
     const j = JOINTS[bone];
-    const jx = j[0] * s, jy = j[1], jz = j[2];
     const aa = pose[bone];
     let local: M = ID;
     if (aa) {
       const r = s === 1 ? axisAngle(aa[0], aa[1], aa[2], aa[3]) : axisAngle(aa[0], -aa[1], -aa[2], aa[3]);
-      local = [
-        r[0], r[1], r[2], jx - (r[0] * jx + r[1] * jy + r[2] * jz),
-        r[3], r[4], r[5], jy - (r[3] * jx + r[4] * jy + r[5] * jz),
-        r[6], r[7], r[8], jz - (r[6] * jx + r[7] * jy + r[8] * jz),
-      ];
+      local = rotateAbout(r, [j[0] * s, j[1], j[2]]);
     }
     const w = mul(pm, local);
     cache.set(key, w);
@@ -100,12 +103,14 @@ export function solvePose(pose: Pose): (bone: BoneName, side: 1 | -1) => M {
 }
 
 export function posePt(xf: (b: BoneName, s: 1 | -1) => M, pt: BPt, side: 1 | -1): V3 {
-  const p: V3 = [pt.p[0] * side, pt.p[1], pt.p[2]];
+  const p: V3 = [pt.restPos[0] * side, pt.restPos[1], pt.restPos[2]];
   return apply(xf(pt.bone, side), p);
 }
 
+const LAT_CLEARANCE_ABDUCTION_DEG = 4;
+
 export const POSES: Record<string, Pose> = {
-  relaxed: { upperarm: [0, 0, 1, 4] },
+  relaxed: { upperarm: [0, 0, 1, LAT_CLEARANCE_ABDUCTION_DEG] },
 };
 
 const MID_BONES: readonly MidBone[] = ['pelvis', 'lumbar', 'chest', 'neck', 'head'];
