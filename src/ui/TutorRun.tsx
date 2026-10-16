@@ -4,7 +4,7 @@ import type { TutorSettings } from '../modes/settings';
 import { platform } from '../platform/android';
 import type { Calibration } from '../pose/metrics';
 import { IconSwap, IconX } from './Icons';
-import { TutorEngine, type DebriefState, type RunSpec, type SessionCalibration, type Snapshot } from './engine';
+import { TutorEngine, type DebriefState, type Heard, type RunSpec, type SessionCalibration, type Snapshot } from './engine';
 import { FigureView } from './FigureView';
 import { CameraProblem, DebriefCard, FramingGuide, HeardToast, PhaseLine, RunControls, ScoreMeter, SummaryPanel } from './RunParts';
 
@@ -53,7 +53,7 @@ function RunView({ engine, onAgain, onHome }: Props & { engine: TutorEngine }) {
   const snap = useSyncExternalStore(engine.subscribe, engine.snapshot);
   const pane = useRef<HTMLDivElement>(null);
   const overlay = useRef<HTMLCanvasElement>(null);
-  const [now, setNow] = useState(() => performance.now());
+  const [expiredHeard, setExpiredHeard] = useState<Heard>();
   const [figureBig, setFigureBig] = useState(false);
   const [dismissed, setDismissed] = useState<DebriefState>();
 
@@ -67,16 +67,16 @@ function RunView({ engine, onAgain, onHome }: Props & { engine: TutorEngine }) {
 
   const paused = snap.view?.paused ?? false;
   useEffect(() => {
-    if (!snap.heard) return;
-    const timer = window.setTimeout(() => setNow(performance.now()), HEARD_SHOW_MS);
-    setNow(performance.now());
+    const heard = snap.heard;
+    if (!heard) return;
+    const timer = window.setTimeout(() => setExpiredHeard(heard), HEARD_SHOW_MS);
     return () => window.clearTimeout(timer);
   }, [snap.heard]);
 
   const { camera, view, calibration } = snap;
   const stage = view?.stage;
   const scored = view?.scoring !== undefined;
-  const showHeard = snap.heard && now - snap.heard.at < HEARD_SHOW_MS;
+  const showHeard = snap.heard !== undefined && snap.heard !== expiredHeard;
   const swapped = figureBig && calibration.kind === 'ready' && stage?.kind !== 'done';
 
   return (
