@@ -1,7 +1,10 @@
 import type { Field } from './field';
 import { SKIN_BONES } from './skeleton';
 
-interface SkinWeights {
+const BASE_PASSES = 20;
+const BASE_STEP = 0.005;
+
+export interface SkinWeights {
   /** Four skin slots per vertex, strongest first. */
   index: Uint8Array;
   /** Four weights per vertex in 1/255 steps; every vertex sums to 255. */
@@ -45,10 +48,10 @@ export function bakeSkinWeights(field: Field, pos: Float32Array, adjStart: Int32
     left -= ring.length;
   }
 
-  const iters = Math.round(20 * (0.005 / h) ** 2);
+  const passes = Math.round(BASE_PASSES * (BASE_STEP / h) ** 2);
   let a = w, b = new Float32Array(w.length);
   const acc = new Float64Array(NB);
-  for (let it = 0; it < iters; it++) {
+  for (let it = 0; it < passes; it++) {
     for (let v = 0; v < NV; v++) {
       const s0 = adjStart[v], s1 = adjStart[v + 1], o = v * NB;
       acc.fill(0);
