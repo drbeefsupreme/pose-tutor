@@ -15,10 +15,7 @@ import org.json.JSONObject
 
 private const val CAMERA = "camera"
 
-/**
- * The native side of src/platform/posePlugin.ts. Camera state lives on the main thread: [request] is what JS
- * asked for (kept across pause), [camera] the running camera (only while the app is in the foreground).
- */
+/** The native side of src/platform/posePlugin.ts. */
 @CapacitorPlugin(
     name = "TutorPose",
     permissions = [Permission(strings = [Manifest.permission.CAMERA], alias = CAMERA)],

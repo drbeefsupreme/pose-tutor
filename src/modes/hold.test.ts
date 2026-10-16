@@ -7,11 +7,9 @@ describe('Hold drill', () => {
   it('holds for the goal and reports the mean score and steadiness', () => {
     const { drill, effects } = startDrill(holdMode('frontDoubleBiceps', 10), 0);
     expect(said(effects)).toEqual(['Front double biceps, 10 second hold.']);
-    // The intro takes about 2.4 s to say; the first correction follows it.
     expect(said(feed(drill, 0, 2900, body(60, ['Raise your elbows.'])))).toEqual(['Raise your elbows.']);
 
     expect(said(drill.frame(3000, body(90), undefined))).toEqual(['Hold it for 10 seconds.']);
-    // 90 and 94 alternate for the hold: mean 92, standard deviation 2.
     const during = [];
     for (let t = 3100; t <= 12_900; t += 100) during.push(...drill.frame(t, body(t % 200 === 0 ? 90 : 94), undefined));
     expect(said(during)).toEqual(['Five seconds.']);

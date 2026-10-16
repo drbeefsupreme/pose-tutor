@@ -1,5 +1,3 @@
-// Downloads the MediaPipe pose landmarker model into the Android app's assets, from a versioned URL, and checks it by
-// hash. Safe to rerun: a file that already matches is kept.
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
@@ -23,7 +21,6 @@ if (existsSync(MODEL.path) && sha256(await readFile(MODEL.path)) === MODEL.sha25
   const hash = sha256(bytes);
   if (hash !== MODEL.sha256) throw new Error(`${MODEL.url}: sha256 ${hash}, expected ${MODEL.sha256}`);
   await mkdir(dirname(MODEL.path), { recursive: true });
-  // Through a temporary file, so an interrupted run never leaves a partial model behind.
   await writeFile(`${MODEL.path}.part`, bytes);
   await rename(`${MODEL.path}.part`, MODEL.path);
   console.log(`fetched ${relative(ROOT, MODEL.path)} (${(bytes.length / 1e6).toFixed(1)} MB)`);

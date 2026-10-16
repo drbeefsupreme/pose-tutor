@@ -1,7 +1,3 @@
-// The Android VoiceInput: the native TutorVoice plugin (./voicePlugin.ts), one recognition session at a time,
-// a new session after each phrase so it listens continuously. It is paused while the tutor speaks, so the
-// microphone does not hear the tutor's own voice.
-
 import { CapacitorException } from '@capacitor/core';
 import type { ListenState, VoiceInput } from './types';
 import type { TutorVoicePlugin } from './voicePlugin';
@@ -11,9 +7,7 @@ const AFTER_SPEECH_MS = 400;
 const RETRY_MS = 3000;
 const LANGUAGE = 'en-US';
 
-/** Session ends that are not failures: silence, no words, or our own cancel. The next session starts at once. */
 const QUIET: Readonly<Record<string, true>> = { aborted: true, 'no-speech': true, 'no-match': true };
-/** Ends after which a new session cannot help until the user acts. */
 const BLOCKED: Readonly<Record<string, ListenState>> = { 'not-allowed': 'denied', unavailable: 'unsupported' };
 
 function errorCode(err: unknown): string {
@@ -25,7 +19,6 @@ export class NativeVoiceInput implements VoiceInput {
   private enabled = false;
   private suppressed = false;
   private blocked = false;
-  /** The session in flight, by number; undefined when no session runs. */
   private session: number | undefined;
   private sessions = 0;
   private timer: number | undefined;
@@ -42,7 +35,6 @@ export class NativeVoiceInput implements VoiceInput {
     return this.current;
   }
 
-  /** The plugin's code for the last failure ('network', 'audio-capture', 'not-allowed', ...). */
   get error(): string | undefined {
     return this.lastError;
   }
@@ -52,7 +44,6 @@ export class NativeVoiceInput implements VoiceInput {
     this.update(0);
   }
 
-  /** True while the tutor speaks. */
   setSuppressed(suppressed: boolean): void {
     if (suppressed === this.suppressed) return;
     this.suppressed = suppressed;

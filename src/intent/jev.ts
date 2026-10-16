@@ -1,5 +1,4 @@
-// Jev (TypeSafe) picks the voice command that a transcript means. The app (src/platform/androidCoach.ts) sends the
-// request over CapacitorHttp; the caller gives the HTTP POST, so the module uses no network API itself.
+// Jev (TypeSafe) picks the voice command that a transcript means.
 
 export const JEV_ENDPOINT = 'https://api.typesafe.ai/v1/systemone';
 export const JEV_TIMEOUT_MS = 2000;

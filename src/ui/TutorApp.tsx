@@ -15,7 +15,6 @@ type Screen =
   | { readonly kind: 'run'; readonly spec: RunSpec; readonly attempt: number }
   | { readonly kind: 'progress' };
 
-/** The tutor: home (modes, pose, settings), a running drill, or the progress photos. */
 export function TutorApp() {
   const [settings, setSettings] = useState<TutorSettings>(() => parseSettings(platform.store.getItem(SETTINGS_KEY)));
   const [calibration, setCalibration] = useState<SessionCalibration>(undefined);

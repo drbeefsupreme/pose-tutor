@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { FACING_HOLD_MS, filterFacing, NO_FACING, type FacingFilter } from './facing';
 import type { Facing } from './types';
 
-/** Replays (time, facing) frames through the filter; returns the stable facing after each frame. */
 function replay(frames: readonly (readonly [number, Facing | undefined])[], start: FacingFilter = NO_FACING): (Facing | undefined)[] {
   let filter = start;
   return frames.map(([now, seen]) => {
@@ -13,7 +12,6 @@ function replay(frames: readonly (readonly [number, Facing | undefined])[], star
 
 describe('facing hysteresis', () => {
   it('holds a back view through the single-frame side flicker seen on the fake camera', () => {
-    // posing-debug.html with the continuous-turn clip, 22-26 s: back, rightSide, back, leftSide, leftSide, back.
     const flicker: [number, Facing][] = [
       [0, 'back'],
       [100, 'rightSide'],

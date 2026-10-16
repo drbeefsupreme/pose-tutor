@@ -35,7 +35,6 @@ function evaluate(check: Check, metrics: Metrics, facing: Facing): CheckResult {
   return { check, value, score: 1, miss: undefined };
 }
 
-/** The spoken correction for a fault. */
 export function faultCue(fault: CheckResult): Cue | undefined {
   if (fault.miss === 'low') return fault.check.low;
   if (fault.miss === 'high') return fault.check.high;

@@ -13,7 +13,6 @@ interface Props {
   readonly onRecheck: () => void;
 }
 
-/** Re-renders when the voice list, the chosen voice or mute changes. */
 function useSpeechVersion(speech: Speech): string {
   const subscribe = useCallback((listener: () => void) => speech.subscribe(listener), [speech]);
   return useSyncExternalStore(subscribe, () => `${speech.muted}|${speech.voice ?? ''}|${speech.voices().length}`);

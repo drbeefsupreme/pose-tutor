@@ -1,5 +1,4 @@
-// The Android SpeechEngine: Android TextToSpeech through @capacitor-community/text-to-speech. It prefers an installed
-// local English voice. The plugin cannot tell an installed local voice from one whose data is missing (the emulator
+// The plugin cannot tell an installed local voice from one whose data is missing (the emulator
 // has data for only some), so a voice that fails is marked and the line is said again with the next untried voice:
 // local en-US first, then other local English, then a network en-US voice, then the engine's default.
 // The engine keeps the last voice it was given, so "default" alone would repeat a failed voice.
@@ -40,7 +39,7 @@ interface InFlight {
 const VOICE_RETRY_MS = 1000;
 const VOICE_TRIES = 10;
 
-/** The English voices. Settings names them by their engine id, because the plugin names every en-US voice the same. */
+/** Settings names voices by their engine id, because the plugin names every en-US voice the same. */
 function englishVoices(all: readonly PluginVoice[]): NativeVoice[] {
   return all.flatMap((v, index) =>
     v.lang.toLowerCase().startsWith('en') ? [{ voiceURI: v.voiceURI, lang: v.lang, localService: v.localService, index }] : [],
@@ -53,7 +52,6 @@ export function nativeSpeech(tts: TtsPlugin, log: SpeechLogEntry[]): SpeechEngin
   const listeners: (() => void)[] = [];
   let current: InFlight | undefined;
 
-  /** The next voice to try: local en-US, other local English, then network en-US; undefined is the engine default. */
   const nextVoice = (): NativeVoice | undefined => {
     const untried = voices.filter((v) => !failed.has(v.voiceURI));
     const local = untried.filter((v) => v.localService);

@@ -1,5 +1,3 @@
-// Skin weights for the baked mesh: up to four bones per vertex, taken from the anatomy (the bones of
-// the nearest muscle bundle or core primitive, Field.boneWeights) and smoothed over the surface.
 import type { Field } from './field';
 import { SKIN_BONES } from './skeleton';
 
@@ -8,12 +6,10 @@ interface SkinWeights {
   index: Uint8Array;
   /** Four weights per vertex in 1/255 steps; every vertex sums to 255. */
   weight: Uint8Array;
-  /** Vertices with no anatomy part nearby; they took their neighbors' weights. */
   filled: number;
 }
 
 /**
- * @param pos vertex positions of the bind-pose mesh
  * @param adjStart vertex adjacency (CSR offsets into adjList)
  * @param h grid step of the mesh, so the smoothing covers the same distance at every resolution
  */
@@ -29,7 +25,6 @@ export function bakeSkinWeights(field: Field, pos: Float32Array, adjStart: Int32
     for (let b = 0; b < NB; b++) w[v * NB + b] = tmp[b];
   }
 
-  // Vertices without a part take the mean of their weighted neighbors, one ring per pass.
   for (let left = missing; left > 0;) {
     const ring: number[] = [];
     for (let v = 0; v < NV; v++) {
@@ -50,8 +45,6 @@ export function bakeSkinWeights(field: Field, pos: Float32Array, adjStart: Int32
     left -= ring.length;
   }
 
-  // Jacobi smoothing: half the vertex, half its neighbor mean. The rig prototype tuned 20 passes on the
-  // 5 mm mesh (about 16 mm of diffusion); the pass count scales with 1/h² to keep that distance.
   const iters = Math.round(20 * (0.005 / h) ** 2);
   let a = w, b = new Float32Array(w.length);
   const acc = new Float64Array(NB);
@@ -66,7 +59,6 @@ export function bakeSkinWeights(field: Field, pos: Float32Array, adjStart: Int32
     [a, b] = [b, a];
   }
 
-  // Four largest influences, quantized to 1/255 with the rounding error put on the strongest.
   const index = new Uint8Array(NV * 4), weight = new Uint8Array(NV * 4);
   const top = new Int32Array(4);
   for (let v = 0; v < NV; v++) {

@@ -25,7 +25,6 @@ const mirror = (list: readonly AxisAngle[]): AxisAngle[] => list.map(([x, y, z, 
 const MIDS: readonly MidBone[] = ['pelvis', 'lumbar', 'chest', 'neck', 'head'];
 const LIMBS: readonly LimbBone[] = ['scap', 'upperarm', 'forearm', 'hand', 'thigh', 'shin', 'foot'];
 
-/** Left-limb rotations written out for both sides. */
 function both(limbs: Partial<Record<LimbBone, readonly AxisAngle[]>>): FigurePose['bones'] {
   const out: FigurePose['bones'] = {};
   for (const b of LIMBS) {

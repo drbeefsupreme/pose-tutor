@@ -2,8 +2,6 @@ import { FIGURE_POSES } from '../figure/figurePoses';
 import { FigureRenderer } from '../figure/FigureRenderer';
 import type { PoseId } from '../pose/types';
 
-// Pose picker thumbnails: one hidden FigureRenderer renders the figure in every pose from the judges' view, once per page.
-
 const SIZE = { width: 180, height: 270 } as const;
 
 export type Thumbnails = Readonly<Record<PoseId, string>>;
@@ -22,7 +20,6 @@ async function render(): Promise<Thumbnails> {
       figure.setPose(figurePose, { instant: true });
       out[pose] = figure.snapshot().toDataURL('image/webp', 0.85);
     }
-    // Every PoseId has a figure pose, so every key is set.
     return out as Thumbnails;
   } finally {
     figure?.dispose();

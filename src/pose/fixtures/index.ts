@@ -50,7 +50,6 @@ const BLAZEPOSE = [
 type LandmarkName = (typeof BLAZEPOSE)[number];
 type Point = readonly [number, number];
 
-/** A hand-built figure: named points in a square image, all visible. */
 export interface Body {
   readonly about: string;
   readonly joints: Partial<Record<LandmarkName, Point>>;
@@ -86,7 +85,6 @@ export const BODIES = {
   leftSide: body(leftSide),
 } as const;
 
-/** The body with some points moved. */
 export function moved(base: Body, joints: Partial<Record<LandmarkName, Point>>): Body {
   return { about: `${base.about} (moved)`, joints: { ...base.joints, ...joints } };
 }

@@ -7,7 +7,6 @@ import type { CheckResult } from './types';
 const ELBOWS = 'Raise your elbows to shoulder height.';
 const FISTS = 'Bring your fists up to your ears.';
 
-/** A front-facing body scoring `score`, whose faults ask for `cues`, most important first. */
 function body(score: number | undefined, ...cues: string[]): Sighting {
   const faults: CheckResult[] = cues.map((text) => ({
     check: { metric: 'elbowHeight', band: { target: 0, min: -1, max: 1 }, weight: 1, low: { text, source: 'TEST' } },
@@ -29,7 +28,6 @@ const turnedAway: Sighting = {
   },
 };
 
-/** Feeds the scheduler one sighting per scripted time and collects every event. */
 function run(script: readonly (readonly [number, Sighting])[]): SessionEvent[] {
   let state = startSession(0);
   const events: SessionEvent[] = [];
@@ -235,7 +233,6 @@ describe('cue scheduler', () => {
   it('starts the hold with the session when the athlete is already in the pose on a frame older than the session', () => {
     let state = startSession(5000);
     const events: SessionEvent[] = [];
-    // The 3 s hold counts from 5000, not 4700: no hit at 7700, the hit at 8000 with time to hit 0.
     for (const now of [4700, 5000, 6000, 7000, 7700, 8000]) {
       const next = advance(state, body(92), now);
       state = next.state;

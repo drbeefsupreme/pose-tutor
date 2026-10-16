@@ -6,20 +6,16 @@ import { POSE_SPECS } from '../pose/spec';
 import type { PoseId, PoseScore } from '../pose/types';
 import type { HoldResult, ModeId } from './mode';
 
-// What the tutor records at a hit: the progress photo request and the coach's tracking summary.
-
 export interface Hit {
   readonly mode: ModeId;
   readonly pose: PoseId;
   readonly result: HitResult | HoldResult;
-  /** The score of the frame that completed the hit. */
   readonly score: PoseScore | undefined;
   readonly landmarks: PoseLandmarks | undefined;
 }
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
-/** The faults that have a spoken cue, most important first. */
 function hitFaults(score: PoseScore | undefined): PhotoFault[] {
   return (score?.faults ?? []).flatMap((f) => {
     const cue = faultCue(f);
@@ -39,7 +35,6 @@ export function photoRequest(hit: Hit, imageDataUrl: string): SavePhotoRequest {
   };
 }
 
-/** The tracking summary the coach model reads next to the snapshot. */
 export function coachSummary(hit: Hit): object {
   const { result } = hit;
   return {

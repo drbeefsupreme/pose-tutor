@@ -4,13 +4,8 @@ import { SCHEDULER, type Sighting } from '../pose/session';
 import type { Command } from './commands';
 import { say, type Effect, type Mode, type ModeView } from './mode';
 
-// A running drill: one mode plus the commands every mode shares. Pause stops the mode clock, so time limits and
-// holds do not run while the athlete is paused. Repeat says the last sentence again; "what's wrong" answers from
-// the latest frame.
-
 export interface DrillView extends ModeView {
   readonly paused: boolean;
-  /** The last sentence the drill said. */
   readonly said: string | undefined;
 }
 
@@ -20,7 +15,6 @@ export interface Drill {
   view(now: number): DrillView;
 }
 
-/** The answer to "what's wrong": the biggest correction on the latest frame. */
 export function whatsWrong(sighting: Sighting | undefined): string {
   if (sighting === undefined) return 'Nothing is scored here.';
   if (sighting.kind === 'nobody') return "I can't see you. Step in front of the camera.";
@@ -32,7 +26,6 @@ export function whatsWrong(sighting: Sighting | undefined): string {
   return score === undefined ? 'Step back so your whole body is in view.' : 'Nothing big. Keep it tight.';
 }
 
-/** A new drill and what it says first. */
 export interface StartedDrill {
   readonly drill: Drill;
   readonly effects: readonly Effect[];

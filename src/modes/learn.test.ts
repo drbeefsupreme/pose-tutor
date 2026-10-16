@@ -12,7 +12,6 @@ describe('Learn a pose', () => {
     expect(said(effects)).toEqual([`Front double biceps, step by step. ${STEPS[0]}`]);
     expect(drill.view(0).stage).toEqual({ kind: 'step', index: 0, count: STEPS.length, text: STEPS[0] });
 
-    // A perfect pose during the steps is not a hit: the steps come first.
     expect(hits(feed(drill, 0, 5000, body(98)))).toEqual([]);
 
     const spoken: string[] = [];

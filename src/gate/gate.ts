@@ -1,6 +1,3 @@
-// The tracking gate harness: renders the figure in every pose and fault from the judges' view, runs the frames through
-// the live tracking pipeline and returns the run, the report and a contact sheet. The gate page (./page.ts) runs it
-// with the native detector.
 import { FIGURE_POSES } from '../figure/figurePoses';
 import { FigureRenderer } from '../figure/FigureRenderer';
 import type { Delegate } from '../platform/types';
@@ -31,7 +28,6 @@ const W = 1280;
 const H = 720;
 const FRAMES = 10;
 const FRAME_MS = 1000 / 30;
-/** Frames of an empty scene, then of the relaxed stance, before each case. */
 const LEAD_IN = 5;
 const RELAXED: { readonly [F in Facing]: PoseId } = {
   front: 'relaxedFront',
@@ -39,9 +35,7 @@ const RELAXED: { readonly [F in Facing]: PoseId } = {
   leftSide: 'quarterTurnLeftSide',
   rightSide: 'quarterTurnRightSide',
 };
-/** A plain wall behind the athlete. */
 const BACKGROUND = '#9a9ea6';
-/** Contact sheet tiles: the middle of the frame, where the figure stands, at half size. */
 const CROP = { x: 400, w: 480 } as const;
 const TILE = { w: 240, h: 360, cols: 6 } as const;
 const SOFTWARE_GL = /swiftshader|llvmpipe|softpipe|software/i;
@@ -94,7 +88,6 @@ function rendererName(canvas: HTMLCanvasElement): string {
   return String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
 }
 
-/** The 26 reference photos scored for their own pose, as score.test.ts does. */
 function referenceScores(): RefScore[] {
   const byId = new Map(REFS.map((r) => [r.id, r]));
   return REFS.map((ref) => {
@@ -105,23 +98,19 @@ function referenceScores(): RefScore[] {
   });
 }
 
-/** What the gate needs from a pose detector: the web tracker, or the native plugin in the Android app. */
+/** What the gate needs from a pose detector: the native plugin in the Android app. */
 export interface GateTracker {
   readonly delegate: Delegate;
   detect(frame: HTMLCanvasElement, timestampMs: number): Promise<PoseLandmarks | undefined>;
 }
 
-/** The figure in front of a plain wall, drawn into a W x H canvas as the gate's camera sees it. */
 export interface Stage {
-  /** What the last `show` drew. */
   readonly frame: HTMLCanvasElement;
-  /** The WebGL renderer's name. */
   readonly renderer: string;
   show(figure: FigurePose): void;
   dispose(): void;
 }
 
-/** Loads the figure into the page's <div id="v">. */
 export async function openStage(): Promise<Stage> {
   const host = document.getElementById('v');
   if (!(host instanceof HTMLDivElement)) throw new Error('The gate page needs <div id="v">');

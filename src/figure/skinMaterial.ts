@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 
-/** Dual-quaternion skinning: the four bone transforms of a vertex, blended and applied to the baked position. */
 function skinPars(bones: number): string {
   return /* glsl */ `
 attribute vec4 aBone;

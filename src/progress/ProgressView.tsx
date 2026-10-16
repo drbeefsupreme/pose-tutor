@@ -70,7 +70,6 @@ function Empty() {
   );
 }
 
-/** Timeline, compare and score trend of the saved progress photos, per pose. */
 export function ProgressView() {
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const [pose, setPose] = useState<PoseId | null>(null);

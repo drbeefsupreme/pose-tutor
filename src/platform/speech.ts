@@ -12,7 +12,6 @@ export interface Line {
   readonly done: () => void;
 }
 
-/** What `Speech` needs from a speech engine: Android text-to-speech (`nativeSpeech`), a fake in tests. */
 export interface SpeechEngine {
   speak(line: Line): void;
   cancel(): void;
@@ -50,7 +49,6 @@ export class Speech {
     engine.onVoicesChanged(() => this.notify());
   }
 
-  /** True while a sentence is being spoken. */
   get speaking(): boolean {
     return this.current !== undefined;
   }

@@ -99,7 +99,6 @@ function RunView({ engine, onAgain, onHome }: Props & { engine: TutorEngine }) {
   const stage = view?.stage;
   const scored = view?.scoring !== undefined;
   const showHeard = snap.heard && now - snap.heard.at < HEARD_SHOW_MS;
-  // The camera pane holds the calibration and the summary, so it is big for those.
   const swapped = figureBig && calibration.kind === 'ready' && stage?.kind !== 'done';
 
   return (

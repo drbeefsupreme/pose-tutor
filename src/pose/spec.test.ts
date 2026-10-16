@@ -7,7 +7,6 @@ import type { Check, MetricId, PoseSpec } from './types';
 const variants: readonly PoseSpec[] = Object.values(POSE_SPECS).flat();
 const checks: readonly [PoseSpec, Check][] = variants.flatMap((spec) => spec.checks.map((c): [PoseSpec, Check] => [spec, c]));
 
-/** Values a metric cannot pass, so a band edge there needs no cue. */
 const LIMITS: { readonly [M in MetricId]: readonly [number, number] } = {
   hipWidth: [0, Infinity],
   shoulderWidth: [0, Infinity],

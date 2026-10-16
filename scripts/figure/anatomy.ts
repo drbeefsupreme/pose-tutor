@@ -1,6 +1,4 @@
-// Procedural anatomy for a heavyweight male bodybuilder (about 1.78 m), relaxed front stance.
-// Region modules live in ./anatomy/*. Each module authors the LEFT side (+X); the field mirrors it.
-// Fiber directions follow origin -> insertion of each bundle (see research/detail-vascularity.md).
+// Each module authors the LEFT side (+X); the field mirrors it.
 import type { Anatomy } from './types';
 import { TORSO } from './anatomy/torso';
 import { BACK } from './anatomy/back';

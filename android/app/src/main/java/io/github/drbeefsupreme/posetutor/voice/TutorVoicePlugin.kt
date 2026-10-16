@@ -42,7 +42,6 @@ private val ERROR_CODES = mapOf(
 /** The recognizer has no language pack for the language here; the next [Mode] may still work. */
 private val LANGUAGE_MISSING = setOf(SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED, SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE)
 
-/** How the plugin recognizes speech, best first; `label` is the `mode` of a listen result. */
 private enum class Mode(val label: String) {
     /** SpeechRecognizer.createOnDeviceSpeechRecognizer (Android 12+): audio never leaves the phone. */
     ON_DEVICE("onDevice"),
@@ -52,10 +51,7 @@ private enum class Mode(val label: String) {
     ONLINE("online"),
 }
 
-/**
- * The native side of src/platform/voicePlugin.ts: one recognition session per `listen` call. Recognizer state
- * lives on the main thread; [pending] is the call of the session in flight.
- */
+/** The native side of src/platform/voicePlugin.ts: one recognition session per `listen` call. */
 @CapacitorPlugin(
     name = "TutorVoice",
     permissions = [Permission(strings = [Manifest.permission.RECORD_AUDIO], alias = MICROPHONE)],
@@ -63,7 +59,6 @@ private enum class Mode(val label: String) {
 class TutorVoicePlugin : Plugin() {
     private var recognizer: SpeechRecognizer? = null
     private var recognizerOnDevice = false
-    /** Moves to the next mode when a recognizer reports a missing language pack, for the app's lifetime. */
     private var mode = Mode.ON_DEVICE
     private var pending: PluginCall? = null
 

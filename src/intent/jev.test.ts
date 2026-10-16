@@ -11,7 +11,6 @@ interface Sent {
   readonly timeoutMs: number;
 }
 
-/** A POST that records each request and answers with `reply`, or rejects with `reply` when it is an Error. */
 function fakePost(reply: JsonReply | Error): { post: PostJson; sent: Sent[] } {
   const sent: Sent[] = [];
   const post: PostJson = async (url, headers, body, timeoutMs) => {

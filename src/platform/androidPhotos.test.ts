@@ -8,7 +8,6 @@ const ID_B = '00000000-0000-4000-8000-00000000000b';
 const ID_C = '00000000-0000-4000-8000-00000000000c';
 const ID_D = '00000000-0000-4000-8000-00000000000d';
 
-/** An in-memory folder: file name -> [data, base64]. */
 function memoryFolder(files = new Map<string, [string, boolean]>()): PhotoFolder & { files: Map<string, [string, boolean]> } {
   return {
     files,
@@ -30,7 +29,6 @@ function request(pose: SavePhotoRequest['pose'], score: number): SavePhotoReques
   return { pose, imageDataUrl: JPEG, score, faults: [{ metric: 'elbowFlex', side: 'left', cue: 'Bend the left arm more.' }], mode: 'learn' };
 }
 
-/** Saves photos with the given ids at one-minute steps from 2026-10-10T10:00Z; later saves get `laterIds`. */
 async function storeWith(saves: readonly [string, SavePhotoRequest][], laterIds: readonly string[] = []) {
   const folder = memoryFolder();
   const ids = [...saves.map(([id]) => id), ...laterIds];

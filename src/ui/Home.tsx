@@ -18,7 +18,6 @@ interface Card {
   readonly name: string;
   readonly blurb: string;
   readonly Icon: ComponentType<{ size?: number }>;
-  /** The card uses the pose picked below. */
   readonly usesPose: boolean;
   readonly color: string;
 }

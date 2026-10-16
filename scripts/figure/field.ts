@@ -1,6 +1,3 @@
-// Signed distance field of the figure, built from anatomical primitives.
-// The field is evaluated for one FieldState at a time.
-
 import { POSES, solvePose, posePt, applyDir, JOINTS, skinSlot } from './skeleton';
 import type { Anatomy, FieldState, V3, MuscleDef, CoreDef } from './types';
 
@@ -10,17 +7,14 @@ const LOFT_SLOTS = [skinSlot('pelvis', 1), skinSlot('lumbar', 1), skinSlot('ches
 interface Prim {
   kind: number;
   neg: boolean;
-  // cone
-  ax: number; ay: number; az: number; // start (cone) / center (ellipsoid)
-  bx: number; by: number; bz: number; // end (cone)
-  ra: number; rb: number;             // cone radii
+  ax: number; ay: number; az: number;
+  bx: number; by: number; bz: number;
+  ra: number; rb: number;
   // sweep: per vertex [px py pz tx ty tz ux uy uz t]
   sw: Float64Array; n: number;
   r0: number; rp: number; r1: number; tp: number; b: number; dr: number;
   head: number;
-  // ellipsoid: center (ax..), inverse rotation rows, radii
   m: number[]; rx: number; ry: number; rz: number;
-  // skinning: skin slots of the control points and their parameter t along the primitive
   cs: number[]; ct: number[];
 }
 
@@ -68,7 +62,6 @@ function blankPrim(): Prim {
   };
 }
 
-/** Catmull-Rom resampling of a control polyline so bends do not leave creases. */
 function smoothPath(ctrl: V3[]): V3[] {
   if (ctrl.length < 3) return ctrl;
   const out: V3[] = [];
@@ -93,12 +86,10 @@ function profile(p: Prim, t: number): number {
   return p.r1 + (p.rp - p.r1) * (1 - Math.pow(1 - x, p.b));
 }
 
-// Fiber parameter of the last primitive evaluation (avoids allocation).
 let lastT = 0;
 
 function evalPrim(p: Prim, x: number, y: number, z: number): number {
   if (p.kind === KIND_SPINDLE) {
-    // Swept ellipse along a smooth polyline with continuously interpolated frames.
     const sw = p.sw, n = p.n;
     let best = 1e30, bi = 0, bs = 0, braw = 0;
     for (let i = 0; i < n - 1; i++) {
@@ -120,7 +111,6 @@ function evalPrim(p: Prim, x: number, y: number, z: number): number {
     const ud = ux * tx + uy * ty + uz * tz;
     ux -= tx * ud; uy -= ty * ud; uz -= tz * ud;
     const ul = Math.hypot(ux, uy, uz) || 1; ux /= ul; uy /= ul; uz /= ul;
-    // width axis = u x t
     const wx = uy * tz - uz * ty, wy = uz * tx - ux * tz, wz = ux * ty - uy * tx;
     const vx = x - cx, vy = y - cy, vz = z - cz;
     const lx = vx * wx + vy * wy + vz * wz;
@@ -158,7 +148,6 @@ function evalPrim(p: Prim, x: number, y: number, z: number): number {
     return (Math.sqrt(x2 * a2 * il2) + yy * rr) * il2 - p.ra;
   }
   if (p.kind === KIND_LOFT) {
-    // Stack of horizontal ellipses [y, cx, cz, a, b], Catmull-Rom interpolated in y.
     const sw = p.sw, n = p.n;
     const y0 = sw[0], y1 = sw[(n - 1) * 5];
     const yc = y < y0 ? y0 : y > y1 ? y1 : y;
@@ -194,7 +183,6 @@ function evalPrim(p: Prim, x: number, y: number, z: number): number {
 
 const GRID_CELL = 0.03;
 const MARGIN = 0.05;
-// Icosahedron vertex directions for the soft-tissue low-pass.
 const BLUR_DIRS = (() => {
   const g = (1 + Math.sqrt(5)) / 2;
   const v = [[-1, g, 0], [1, g, 0], [-1, -g, 0], [1, -g, 0], [0, -1, g], [0, 1, g], [0, -1, -g], [0, 1, -g], [g, 0, -1], [g, 0, 1], [-g, 0, -1], [-g, 0, 1]];
@@ -215,7 +203,6 @@ export class Field {
   fat: { c: V3; ir: V3; a: number }[] = [];
   fatBase: number;
   blurR: number;
-  // acceleration grid
   gmin: V3 = [0, 0, 0];
   gdim: V3 = [0, 0, 0];
   cells: Int32Array[] = [];
@@ -226,8 +213,6 @@ export class Field {
     const fatAtt = 1 - 0.85 * st.fat;
     this.kInter = 0.009 + 0.012 * st.fat;
     this.grooveDepth = 0.0068 * st.sep * fatAtt;
-    // d2 - d1 changes about twice as fast as distance across a border, so the spatial
-    // half-width of the groove is about grooveWidth / 2.
     this.grooveWidth = 0.014;
     this.intraDepth = 0.0036 * st.detail * fatAtt;
     this.intraK = 0.009 * st.fat;
@@ -274,7 +259,6 @@ export class Field {
         p.rp = bd.rp * stretch;
         p.tp = bd.tp; p.b = bd.bulge ?? 2; p.dr = bd.dr;
         p.head = hid;
-        // Control point k sits at resampled index 5k (smoothPath), so its t is stored there.
         p.cs = bd.pts.map((q) => skinSlot(q.bone, side));
         p.ct = bd.pts.map((_, k) => sw[(bd.pts.length >= 3 ? k * 5 : k) * 10 + 9]);
         part.prims.push(p);
@@ -321,7 +305,6 @@ export class Field {
           const rot = cp.rot ?? [0, 0, 0];
           const rotS: V3 = side === 1 ? rot : [rot[0], -rot[1], -rot[2]];
           const R = eulerMatrix(rotS);
-          // world = bone * R ; inverse = transpose
           const bx = xf(cp.c.bone, side);
           const cols: V3[] = [0, 1, 2].map((j) => applyDir(bx, [R[j], R[3 + j], R[6 + j]]));
           p.m = [cols[0][0], cols[0][1], cols[0][2], cols[1][0], cols[1][1], cols[1][2], cols[2][0], cols[2][1], cols[2][2]];
@@ -411,11 +394,9 @@ export class Field {
     return i + nx * (j + ny * k);
   }
 
-  // scratch for part distances
   private pd = new Float64Array(256);
   private pid = new Int32Array(256);
 
-  /** Distance of one part (smooth union of its primitives, intramuscular head grooves). */
   partDist(part: Part, x: number, y: number, z: number): number {
     const prims = part.prims;
     let d = 1e9;
@@ -452,7 +433,6 @@ export class Field {
     return t + this.st.fat * (this.fatBase / Math.max(this.st.fat, 1e-6) + s);
   }
 
-  /** Muscle/bone relief with border grooves, before soft-tissue layers. */
   evalSharp(x: number, y: number, z: number): number {
     const c = this.cellOf(x, y, z);
     if (c < 0) return MARGIN;
@@ -463,13 +443,10 @@ export class Field {
     for (let i = 0; i < n; i++) {
       const part = this.parts[list[i]];
       const d = this.partDist(part, x, y, z);
-      // insertion sort ascending
       let j = i;
       while (j > 0 && pd[j - 1] > d) { pd[j] = pd[j - 1]; pid[j] = pid[j - 1]; j--; }
       pd[j] = d; pid[j] = list[i];
     }
-    // Muscles union with each other (kInter); cores union with each other; then the two sets
-    // blend with a core radius weighted smoothly by proximity. This is free of order jumps.
     let dm = 1e9, dc = 1e9, cMin = 1e9, wsum = 0, ksum = 0;
     for (let i = 0; i < n; i++) {
       const part = this.parts[pid[i]];
@@ -486,13 +463,10 @@ export class Field {
     const kMC = Math.max(this.kInter, wsum > 0 ? ksum / wsum : 0);
     let d = dm > 1e8 ? dc : dc > 1e8 ? dm : smin(dm, dc, kMC);
     if (n > 1 && this.grooveDepth > 0) {
-      // Groove along the border between the nearest separable part and any separable neighbor.
-      // Taking the max over neighbors keeps the field continuous when neighbors swap order.
       let i0 = -1;
       for (let i = 0; i < n; i++) if (this.parts[pid[i]].sep > 0) { i0 = i; break; }
       const lag = i0 >= 0 ? pd[i0] - pd[0] : 1;
       if (i0 >= 0 && lag < 0.012) {
-        // Fade (not switch) the groove when a non-separable part lies closer to the surface.
         const u = Math.min(1, Math.max(0, (lag - 0.006) / 0.006));
         const fade = 1 - u * u * (3 - 2 * u);
         const s0 = this.parts[pid[i0]].sep;
@@ -510,7 +484,6 @@ export class Field {
     return d;
   }
 
-  /** Full field: optional low-pass of the muscle relief (soft tissue), skin/fat layer, raised veins. */
   eval(x: number, y: number, z: number): number {
     let d: number;
     const R = this.blurR;
@@ -531,7 +504,6 @@ export class Field {
   }
 
   grad(x: number, y: number, z: number, eps = 0.0004): V3 {
-    // tetrahedral gradient
     const a = this.eval(x + eps, y - eps, z - eps);
     const b = this.eval(x - eps, y - eps, z + eps);
     const c = this.eval(x - eps, y + eps, z - eps);
@@ -541,15 +513,9 @@ export class Field {
     return [gx / l, gy / l, gz / l];
   }
 
-  // scratch for skin weights: primitive distances, then their fiber parameters
   private skinScratch = new Float64Array(0);
 
-  /**
-   * Skin weights at a point, one per SKIN_BONES slot: the bones of the nearest anatomy primitives.
-   * Muscle bundles blend the bones of their control points along the fiber, cones along their axis;
-   * ellipsoids carry one bone and the torso loft blends pelvis, lumbar and chest by height. Parts and
-   * primitives blend by soft-argmin on distance (4 mm). Returns false when no part is near.
-   */
+  /** Skin weights at a point, one per SKIN_BONES slot. Returns false when no part is near. */
   boneWeights(x: number, y: number, z: number, out: Float64Array): boolean {
     out.fill(0);
     const c = this.cellOf(x, y, z);

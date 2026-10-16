@@ -29,11 +29,7 @@ internal enum class SecretName(val id: String) {
 
 internal class KeystoreFailure(message: String, cause: Throwable) : Exception(message, cause)
 
-/**
- * Secrets sealed with an AES-256-GCM key that stays in the AndroidKeyStore (not exportable, no user authentication).
- * The IV and ciphertext live in app-private SharedPreferences, which the app's backup rules exclude. The secret's name
- * is the GCM associated data, so a stored value does not decrypt under another name.
- */
+/** The app's backup rules (res/xml/data_extraction_rules.xml) exclude these SharedPreferences. */
 internal class SecretStore(context: Context) {
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val alias = "${context.packageName}.secrets"

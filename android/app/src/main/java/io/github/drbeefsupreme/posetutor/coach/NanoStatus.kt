@@ -52,7 +52,6 @@ internal fun GenAiException.toFailure(): CoachFailure = when (errorCode) {
     else -> CoachFailure(CoachError.FAILED, describe(this), this)
 }
 
-/** Maps an ML Kit [FeatureStatus] value, or the exception that `checkStatus` raised, to a [NanoStatus]. */
 internal class NanoStatusMapper(private val context: Context) {
     fun map(featureStatus: Int): NanoStatus = when (featureStatus) {
         FeatureStatus.AVAILABLE -> NanoStatus.Available

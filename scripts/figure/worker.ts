@@ -1,4 +1,3 @@
-// Worker: evaluates the anatomy field for blocks and projections.
 import { Field, type VeinPath } from './field';
 import { ANATOMY } from './anatomy';
 import type { FieldState } from './types';
@@ -39,7 +38,6 @@ self.onmessage = (ev: MessageEvent<{ id: number; job: Job }>) => {
     }
     self.postMessage({ id, out }, [out.buffer]);
   } else if (job.type === 'refine') {
-    // Move vertices onto the zero set along the gradient.
     const f = getField(job.state, job.pose);
     const p = job.pos;
     const nrm = new Float32Array(p.length);
@@ -56,7 +54,6 @@ self.onmessage = (ev: MessageEvent<{ id: number; job: Job }>) => {
     }
     self.postMessage({ id, out: p, nrm }, [p.buffer, nrm.buffer]);
   } else if (job.type === 'project') {
-    // Find the target surface along each base normal (keeps vertex correspondence with the base mesh).
     const f = getField(job.state, job.pose, job.veins);
     const p = job.pos, n = job.nrm;
     const outP = new Float32Array(p.length), outN = new Float32Array(p.length);
@@ -66,7 +63,6 @@ self.onmessage = (ev: MessageEvent<{ id: number; job: Job }>) => {
     for (let v = 0; v < p.length; v += 3) {
       const nx = n[v], ny = n[v + 1], nz = n[v + 2];
       const at = (s: number) => f.eval(p[v] + nx * s, p[v + 1] + ny * s, p[v + 2] + nz * s);
-      // Bracket the root nearest to s = 0, searching both directions.
       const f0 = at(0);
       let lo = 0, hi = 0, found = Math.abs(f0) < 1e-7;
       let pPrev = 0, fPrev = f0, mPrev = 0, gPrev = f0;
@@ -91,7 +87,6 @@ self.onmessage = (ev: MessageEvent<{ id: number; job: Job }>) => {
       outP[v] = x; outP[v + 1] = y; outP[v + 2] = z;
       const g = f.grad(x, y, z, 0.0006);
       outN[v] = g[0]; outN[v + 1] = g[1]; outN[v + 2] = g[2];
-      // SDF ambient occlusion: concave grooves read darker.
       let occ = 0, w = 1;
       for (let i = 1; i <= 5; i++) {
         const h = 0.0045 * i;

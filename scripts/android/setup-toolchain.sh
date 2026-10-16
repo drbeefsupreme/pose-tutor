@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Installs a JDK, the Android SDK and the emulator's system image in user space (no sudo). emulator.sh and the check
-# scripts create their own AVDs on first use.
-# Safe to rerun: each step skips work that is already done.
 set -euo pipefail
 
 JDK_DIR="${JDK_DIR:-$HOME/.local/jdk-21}"

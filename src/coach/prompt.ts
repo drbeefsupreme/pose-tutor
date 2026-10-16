@@ -1,6 +1,3 @@
-// The coach debrief prompt for Gemini Nano on the phone (src/platform/androidCoach.ts), which gets the snapshot
-// attached to the request, and the parser of its JSON reply.
-
 const MAX_CUES = 3;
 const FOCUS = 'lat flare, chest lift, waist vacuum, tension, facial expression, presentation';
 
@@ -9,10 +6,7 @@ interface CoachReply {
   readonly note: string;
 }
 
-/**
- * The prompt for Gemini Nano, with the snapshot attached: short lines for a small model, and JSON placeholders that say
- * what goes in each field.
- */
+/** Short lines for a small model, and JSON placeholders that say what goes in each field. */
 export function nanoCoachPrompt(pose: string, summary: object): string {
   return [
     `You are a bodybuilding posing coach. The image shows an athlete holding the pose ${JSON.stringify(pose)}.`,

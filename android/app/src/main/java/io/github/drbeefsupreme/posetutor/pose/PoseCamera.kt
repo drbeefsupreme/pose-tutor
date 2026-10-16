@@ -27,18 +27,13 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
-/** A box in CSS pixels relative to the WebView's top-left corner. */
 internal data class PreviewRect(val x: Double, val y: Double, val width: Double, val height: Double)
 
 /** Analysis frames in sensor orientation; 1280 px wide upright photos in landscape, 960 in portrait. */
 private val ANALYSIS_SIZE = Size(1280, 960)
 private const val FIRST_FRAME_TIMEOUT_MS = 10_000L
 
-/**
- * One run of the front camera: a mirrored PreviewView behind the transparent WebView, and upright analysis frames
- * into a [LiveDetector]. Preview and analysis are both 4:3 so they show the same field of view; the preview fills its
- * box like `object-fit: cover`. Use from the main thread. A closed camera stays closed; open a new one to resume.
- */
+/** Preview and analysis are both 4:3 so they show the same field of view. */
 internal class PoseCamera(
     private val activity: AppCompatActivity,
     private val webView: WebView,
@@ -46,13 +41,10 @@ internal class PoseCamera(
     private val events: Events,
 ) {
     interface Events {
-        /** On a MediaPipe thread. */
         fun onFrame(frame: JSObject)
 
-        /** On the main thread, once, at the first tracked frame. */
         fun onReady(delegate: Delegate)
 
-        /** On the main thread, after the camera has closed itself. */
         fun onFailed(failure: CameraFailure, message: String)
     }
 
@@ -172,7 +164,6 @@ internal class PoseCamera(
 
     fun reset() = detector.requestReset()
 
-    /** Calls [done] on the analysis thread, or at once with null when closed. */
     fun capture(maxWidth: Int, done: (String?) -> Unit) {
         if (phase == Phase.CLOSED) done(null) else executor.execute { done(detector.capture(maxWidth)) }
     }

@@ -1,10 +1,6 @@
 import type { CoreDef, FatDeposit, MuscleDef, VeinDef } from '../types';
 import { P, B, ell, cone, regionModule } from './common';
 
-// Left leg (+X). Landmarks (m): ASIS (0.122, 1.0, 0.072), AIIS (0.108, 0.96, 0.07), pubic tubercle (0.025, 0.9, 0.085),
-// ischial tuberosity (0.058, 0.87, -0.075), greater trochanter (0.17, 0.91, -0.01), knee joint (0.115, 0.505, 0),
-// patella center (0.12, 0.54, 0.041), tibial tuberosity (0.121, 0.457, 0.03), fibular head (0.163, 0.462, -0.028),
-// medial / lateral malleolus (0.117, 0.088, -0.01) / (0.166, 0.075, -0.035), ankle (0.14, 0.085, -0.02).
 const muscles: MuscleDef[] = [];
 const cores: CoreDef[] = [];
 const veins: VeinDef[] = [];
@@ -21,7 +17,6 @@ muscles.push({
   bundles: [B([P('pelvis', 0.138, 1.0, 0.062), P('thigh', 0.168, 0.93, 0.05), P('thigh', 0.19, 0.855, 0.03)], 0.014, 0.025, 0.01, 0.4, 0.6, [1, 0, 0.75])],
 });
 
-// --- Quadriceps
 // Rectus femoris: AIIS to the quadriceps tendon, the central spindle of the front of the thigh.
 muscles.push({
   name: 'rectusFemoris', region: 'quads', sep: 0.9, intra: 0.35,
@@ -99,7 +94,6 @@ muscles.push({
     0.012, 0.038, 0.012, 0.58, 0.8, [-0.4, 0, -1])],
 });
 
-// --- Lower leg
 // Gastrocnemius: the medial head is larger and reaches lower than the lateral head (the calf "diamond").
 muscles.push({
   name: 'gastroc', region: 'calves', sep: 0.85, intra: 0.8, k: 0.028,
@@ -140,7 +134,6 @@ muscles.push({
   ],
 });
 
-// --- Bones and deep fill
 cores.push({
   name: 'femur', region: 'quads', k: 0.015, sep: 0.2,
   prims: [cone(P('thigh', 0.135, 0.89, -0.005), P('thigh', 0.118, 0.56, -0.005), 0.016, 0.018), ell(P('thigh', 0.168, 0.905, -0.012), [0.02, 0.028, 0.026])],
@@ -202,7 +195,6 @@ cores.push({
 // Iliotibial tract: shows as a flat cord on the outer knee down to Gerdy's tubercle.
 cores.push({ name: 'itBand', region: 'quads', k: 0.015, sep: 0.25, prims: [cone(P('thigh', 0.19, 0.66, 0.0), P('thigh', 0.17, 0.57, 0.012), 0.008, 0.008), cone(P('thigh', 0.17, 0.57, 0.012), P('shin', 0.151, 0.478, 0.022), 0.008, 0.007)] });
 
-// --- Foot: heel, arch, ball and five toes.
 cores.push({
   name: 'foot', region: 'feet', k: 0.012, sep: 0.2,
   prims: [
@@ -231,7 +223,6 @@ cores.push({
     cone(P('shin', 0.156, 0.15, 0.01), fp(0.075, 0.012, 0.047), 0.0042, 0.0038)],
 });
 
-// --- Superficial veins
 veins.push(
   { name: 'greatSaphenous', region: 'adductors', r: 0.0028, taper: 0.8, pts: [fp(0.05, -0.04, 0.045), P('shin', 0.108, 0.1, 0.015), P('shin', 0.085, 0.25, -0.012), P('shin', 0.075, 0.4, -0.03), P('thigh', 0.062, 0.52, -0.035), P('thigh', 0.03, 0.65, -0.01), P('thigh', 0.035, 0.78, 0.04), P('thigh', 0.055, 0.86, 0.075)] },
   { name: 'anteriorThigh', region: 'quads', r: 0.0024, taper: 0.8, pts: [P('thigh', 0.18, 0.6, 0.06), P('thigh', 0.15, 0.68, 0.1), P('thigh', 0.12, 0.76, 0.115), P('thigh', 0.085, 0.82, 0.105), P('thigh', 0.06, 0.86, 0.085)] },

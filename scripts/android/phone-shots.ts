@@ -1,12 +1,4 @@
 // The phone layout: npm run android:phone-shots [-- --build | --no-build]
-// Boots the harness emulator with a camera video (empty room, relaxed front, the move into front double biceps and
-// back), installs the APK with cleared data and drives index.html over CDP in portrait, then in landscape
-// (`adb emu rotate`). In Settings it shows the on-device coach (unavailable on the emulator) and its self-test, and
-// pastes a dummy TypeSafe key into the Voice commands form, checks that it stays saved across an app restart and is
-// never shown, then clears it. It runs Learn to two hits with the coach debrief, opens Progress and deletes one photo.
-// With a 15 s screen timeout, the run stays idle for 25 s and the screen must stay on; outside a run the same idle must
-// turn it off. Writes docs/phone-report.md; the screenshots and results.json go to docs/shots/phone/. Exits 1 when a
-// check fails.
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -25,16 +17,12 @@ const WORK = join(tmpdir(), 'pose-tutor-phone-shots');
 const POSE: PoseId = 'frontDoubleBiceps';
 const SECONDS_PER_FRAME = 0.25;
 const SETTINGS: TutorSettings = { voiceCommands: false, debrief: true, holdGoal: 10 };
-/** A stand-in for a TypeSafe key: the screenshots show the form, never a real key. */
 const DUMMY_KEY = 'phone-shots-not-a-real-key';
-/** The score must be at least this share of the screen height to read from 2-3 m. */
 const MIN_SCORE_SHARE = 0.12;
 /** The emulator's screen capture lags the page by about a second on -gpu host. */
 const CAPTURE_LAG_MS = 1500;
-/** The keep-awake check: the screen timeout during the run, and how long the run stays idle. */
 const SCREEN_TIMEOUT_MS = 15_000;
 const IDLE_MS = 25_000;
-/** The screenshot of each drill stage; one per orientation, taken when the stage lasts past the capture lag. */
 const STAGE_SHOTS: Readonly<Record<string, string>> = {
   framing: '11-run-framing',
   correcting: '12-run-correcting',
@@ -47,7 +35,6 @@ interface Check {
   readonly detail: string;
 }
 
-/** What the checks read of the tutor state (window.__tutorState in TutorRun.tsx). */
 interface Seen {
   readonly stage?: string;
   readonly stepsLeft?: number;
@@ -65,10 +52,6 @@ const SEEN = `(() => {
     calibration: s.calibration.kind, debrief: s.debrief.kind, photo: s.photo?.id, score: s.score } : null;
 })()`;
 
-/**
- * Logs every stage change in the page, every 50 ms, so a short stage (the hold before a quick hit) is seen even while
- * the driver waits on a screenshot.
- */
 const RECORD_STAGES = `(() => {
   clearInterval(window.__stageTimer);
   const log = [];
@@ -79,7 +62,6 @@ const RECORD_STAGES = `(() => {
   }, 50);
 })()`;
 
-/** The score's size on screen: the digits' ink height (canvas metrics of the same font) against the page height. */
 const LEGIBILITY = `(() => {
   const el = document.querySelector('.tutor-score-value');
   const cs = getComputedStyle(el);
@@ -100,7 +82,6 @@ interface Legibility {
   readonly dpr: number;
 }
 
-/** Empty room 4 s, relaxed front 8 s, the move into the pose, the pose 10 s, the move back. */
 function timeline(): { readonly spec: FrameSpec | 'empty'; readonly seconds: number }[] {
   const move = (from: PoseId, to: PoseId) => Array.from({ length: 6 }, (_, i) => ({ spec: { from, to, t: (i + 1) / 7 }, seconds: SECONDS_PER_FRAME }));
   return [
@@ -184,7 +165,6 @@ main(async (cleanup) => {
   };
   const scrollTo = (selector: string) => ev<boolean>(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); el?.scrollIntoView({ block: 'start' }); return !!el; })()`);
   const seen = async () => (await ev<Seen | null>(SEEN).catch(() => null)) ?? undefined;
-  /** The data-state of a Settings section of the phone (DeviceSettings.tsx), once it is no longer checking. */
   const stateOf = (section: string) =>
     waitFor(`the ${section} state`, 15_000, async () => {
       const state = await ev<string>(`document.querySelector('[data-testid="${section}"] .tutor-device-state')?.dataset.state ?? ''`);
@@ -197,10 +177,7 @@ main(async (cleanup) => {
     }, 200);
   /** The app's own keep-awake flag (FLAG_KEEP_SCREEN_ON in the window attributes), not the one DevTools adds. */
   const keptAwake = async () => (await ev<{ isKeptAwake: boolean }>('window.Capacitor.Plugins.KeepAwake.isKeptAwake()')).isKeptAwake;
-  /**
-   * Leaves the device without input for IDLE_MS and returns its wakefulness. DevTools is detached meanwhile, as an
-   * attached client keeps the screen on; the screen is woken before it attaches again.
-   */
+  /** An attached DevTools client keeps the screen on, so DevTools is detached meanwhile. */
   const idle = async (): Promise<string> => {
     app.close();
     await sleep(IDLE_MS);
@@ -213,12 +190,6 @@ main(async (cleanup) => {
   const photoFiles = () => adb('shell', 'run-as', APP_ID, 'ls', 'files/photos').split(/\s+/).filter((f) => f.endsWith('.jpg') || f.endsWith('.webp'));
   const homeReady = () => waitFor('the home screen', 60_000, async () => ((await ev<boolean>(`!!document.querySelector('.tutor-pose img')`).catch(() => false)) ? true : undefined));
 
-  /**
-   * Drives one drill from the build-up to the hit and returns its stages in order, as the page logged them. With
-   * `fromEmptyRoom`, the last build-up step waits for an empty camera view, so the drill starts in framing. The score
-   * is measured once per `tag`. Each stage of STAGE_SHOTS is captured once per `tag`, and only when the drill is still
-   * in that stage after the capture lag, so the picture shows the stage it is named after.
-   */
   const toHit = async (tag: string, fromEmptyRoom: boolean): Promise<readonly string[]> => {
     await ev(RECORD_STAGES);
     for (let i = 0; i < 12; i++) {
@@ -248,7 +219,6 @@ main(async (cleanup) => {
     }
   };
 
-  /** Learn to a hit; `tag` prefixes the screenshots, and the coach note is waited for when `coach`. */
   const learn = async (tag: string, coach: boolean) => {
     await click('button[data-mode="learn"]');
     if (tag === 'port') {

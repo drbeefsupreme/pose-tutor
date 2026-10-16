@@ -28,20 +28,17 @@ describe("Judge's calls", () => {
     expect(said(effects)).toEqual(['Facing the front, relaxed.']);
     expect(drill.view(0)).toEqual(expect.objectContaining({ scoring: 'relaxedFront', detail: 'Call 1 of 3', clock: { label: 'Time left', ms: 10_000 } }));
 
-    // Call 1: in the pose from 2 s, held 3 s.
     feed(drill, 0, 1900, NOBODY);
     const first = feed(drill, 2000, 5000, body(90, [], 'relaxedFront'));
     expect(hits(first)).toEqual([{ kind: 'hit', pose: 'relaxedFront', result: expect.objectContaining({ meanScore: 90, timeToHitMs: 2000 }) }]);
     expect(drill.view(5000).stage).toEqual({ kind: 'rest' });
 
-    // Call 2 comes after the rest; the athlete never gets it and the time runs out.
     expect(said(feed(drill, 5100, 6900, NOBODY))).toEqual([]);
     expect(said(drill.frame(7000, NOBODY, undefined))).toEqual([JUDGE_CALLS.quarterTurnLeftSide]);
     const second = feed(drill, 7100, 17_000, body(70, [], 'quarterTurnLeftSide'));
     expect(said(second)).toContain('Time.');
     expect(hits(second)).toEqual([]);
 
-    // Call 3: skipped by voice. It was the last call, so the round ends.
     feed(drill, 17_100, 19_000, NOBODY);
     drill.frame(19_100, body(40, [], 'relaxedBack'), undefined);
     expect(said(drill.command(20_000, 'skip'))).toEqual(["That's the round. Average score 67."]);

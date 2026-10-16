@@ -99,7 +99,6 @@ export interface SessionState {
   readonly busyUntil: number;
   /** The last correction said in this phase, and the estimated end of saying it. */
   readonly focus: { readonly text: string; readonly endsAt: number } | undefined;
-  /** When each correction was last said. */
   readonly lastSaid: ReadonlyMap<string, number>;
   readonly praises: number;
 }
@@ -225,7 +224,6 @@ export function advance(
   const reading = read(sighting, config.minorScore);
 
   if (reading.kind === 'framing') {
-    // A short dropout during the hold is ignored: the hold clock runs on and nothing is said.
     if (s.phase.kind === 'holding' && now - s.phase.seenAt <= config.holdGraceMs) return { state, events: [] };
     if (s.phase.kind !== 'framing' || s.phase.reason !== reading.reason) {
       s.phase = { kind: 'framing', reason: reading.reason };
@@ -250,7 +248,6 @@ export function advance(
       events.push({ kind: 'hit', at: now, say: say(s, HIT_SAY, true, now, config), result });
     }
   } else if (s.phase.kind === 'holding' && now - s.phase.seenAt <= config.holdGraceMs) {
-    // A short dip under the line keeps the hold, but counts in its stats; it cannot complete the hit.
     const { stats } = s.phase;
     s.phase = { ...s.phase, stats: { n: stats.n + 1, sum: stats.sum + reading.score, sumSq: stats.sumSq + reading.score * reading.score } };
   } else if (s.phase.kind !== 'holding' && reading.score >= config.hitScore) {

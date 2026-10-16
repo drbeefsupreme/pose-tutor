@@ -1,5 +1,3 @@
-// Renders gate frames of the figure on this computer, for the emulator's camera video: gate.html served by Vite, in a
-// separate headless google-chrome on SwiftShader (no camera, audio muted).
 import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -9,7 +7,6 @@ import type { FrameSpec } from '../../../src/gate/page.ts';
 import { connect, targets, type Cdp } from './cdp.ts';
 import { ROOT, stopGroup, waitFor } from './tools.ts';
 
-/** PNGs (1280x720) of the app's figure model, one per spec. */
 export async function renderFrames(specs: readonly FrameSpec[]): Promise<Buffer[]> {
   const server = await createServer({
     configFile: false,

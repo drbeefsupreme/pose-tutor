@@ -7,7 +7,6 @@ import { createSkinMaterial, type BoneUniforms } from './skinMaterial';
 /** 'stage': the app's overhead stage light. 'neutral': the soft studio light that the tracking gate renders with. */
 type Lighting = 'stage' | 'neutral';
 
-/** The baked figure (public/figure, npm run figure). */
 const MODEL = 'figure/relaxed';
 
 interface ModelMeta {
@@ -17,7 +16,6 @@ interface ModelMeta {
 
 const ARRAY = { f32: Float32Array, i16: Int16Array, u32: Uint32Array, u8: Uint8Array } as const;
 
-/** The judges' view: the camera looks at the figure's middle from the front, slightly from above. */
 const FOV = 28;
 const LOOK_AT = new THREE.Vector3(0, 0.8, 0);
 const VIEW_DIR = new THREE.Vector3(0, 0.02, 1).normalize();
@@ -47,7 +45,6 @@ function addLights(scene: THREE.Scene, lighting: Lighting): void {
     rim2.position.set(2, 1.8, -2.5);
     lights.push(key, fill, rim, rim2, new THREE.HemisphereLight(0xf2f4ff, 0x4a3d36, 0.35));
   } else {
-    // Strong overhead and high side lights deepen the shadows in the muscle grooves.
     const top = new THREE.SpotLight(0xfff1dc, 60, 9, Math.PI / 7, 0.5, 1.4);
     top.position.set(0.35, 4.2, 1.6);
     top.castShadow = true;
@@ -69,7 +66,6 @@ function addLights(scene: THREE.Scene, lighting: Lighting): void {
   }
 }
 
-/** The posing platform: a dark disc with a glowing rim and the figure's contact shadow. */
 function addPlatform(scene: THREE.Scene): void {
   const platform = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.66, 0.05, 96),
     new THREE.MeshStandardMaterial({ color: '#171b26', roughness: 0.45, metalness: 0.2 }));
@@ -100,7 +96,6 @@ export class FigureRenderer {
   private transition: Transition | undefined;
   private frame = 0;
 
-  /** Loads the model and adds the figure's canvas to `container`. */
   static async load(container: HTMLElement, lighting: Lighting): Promise<FigureRenderer> {
     const [metaRes, binRes] = await Promise.all([fetch(`${MODEL}.json`), fetch(`${MODEL}.bin`)]);
     if (!metaRes.ok || !binRes.ok) throw new Error(`The figure model failed to load (${metaRes.status}, ${binRes.status})`);
@@ -180,7 +175,6 @@ export class FigureRenderer {
     this.renderer.domElement.remove();
   }
 
-  /** Fits the full figure and the platform into the container's aspect ratio. */
   private resize(): void {
     const w = this.container.clientWidth, h = this.container.clientHeight;
     if (!w || !h) return;

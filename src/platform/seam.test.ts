@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-// The tutor's views and engine reach the device only through src/platform. These are the browser APIs that must stay
-// there.
 const FORBIDDEN: Readonly<Record<string, RegExp>> = {
   camera: /navigator\s*\.\s*mediaDevices|getUserMedia/,
   'speech output': /speechSynthesis|SpeechSynthesisUtterance/,

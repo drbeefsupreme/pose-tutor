@@ -3,9 +3,6 @@ import { POSE_LABELS } from '../progress/format';
 import type { PoseId } from '../pose/types';
 import { say, sessionAfter, sessionStage, spoken, type Effect, type Mode, type Step, type Summary } from './mode';
 
-// Judge's calls: NPC prejudging. The quarter turns, then the eight mandatory poses, each called as a head judge
-// calls it, with a time limit per call and a short rest between calls.
-
 /** Prejudging order: quarter turns (front, left side, back, right side), then the mandatory poses. */
 export const JUDGE_ORDER: readonly PoseId[] = [
   'relaxedFront',
@@ -40,9 +37,7 @@ export const JUDGE_CALLS: Record<PoseId, string> = {
 
 interface JudgeConfig {
   readonly order: readonly PoseId[];
-  /** Time to hit each call. */
   readonly limitMs: number;
-  /** Pause after a call before the next one. */
   readonly restMs: number;
 }
 
@@ -81,14 +76,12 @@ export function judgeMode(config: JudgeConfig = JUDGE): Mode<JudgeState> {
     };
   };
 
-  /** Records the current call and rests before the next one, or ends the round. */
   const close = (results: readonly CallResult[], now: number, effects: readonly Effect[]): Step<JudgeState> => {
     if (results.length < order.length) return { state: { results, stage: { kind: 'rest', until: now + config.restMs } }, effects };
     const { meanScore } = judgeSummary(results, order.length);
     return { state: { results, stage: { kind: 'done' } }, effects: [...effects, say(`That's the round. Average score ${Math.round(meanScore)}.`)] };
   };
 
-  /** In a rest, calls the next pose now; in a call, records it as skipped and calls the next one. */
   const moveOn = (state: JudgeState, now: number): Step<JudgeState> => {
     const { stage, results } = state;
     if (stage.kind === 'rest') return call(results, now);

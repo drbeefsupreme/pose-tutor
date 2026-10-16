@@ -31,7 +31,6 @@ const FRAMING_TEXT: Record<FramingReason, string> = {
   unclear: 'Step back so the camera sees you clearly',
 };
 
-/** The session phase as a label, with the hold's progress. */
 export function PhaseLine({ stage, paused }: { stage: Stage; paused: boolean }) {
   if (paused) return <p className="tutor-phase" data-phase="paused">Paused · say "resume" or press P</p>;
   switch (stage.kind) {
@@ -114,7 +113,6 @@ const CONTROLS: readonly (readonly [Command, string])[] = [
   ['whatsWrong', "What's wrong"],
 ];
 
-/** The voice commands as buttons, for a screen without a keyboard. */
 export function RunControls({ paused, disabled, onCommand }: { paused: boolean; disabled: boolean; onCommand: (command: Command) => void }) {
   return (
     <nav className="tutor-controls" aria-label="Drill commands">

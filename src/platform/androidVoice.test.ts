@@ -4,7 +4,6 @@ import { NativeVoiceInput } from './androidVoice';
 import type { ListenState } from './types';
 import type { TutorVoicePlugin, ListenResult } from './voicePlugin';
 
-/** A voice plugin whose sessions end when the test says so. */
 function fakePlugin() {
   const sessions: { resolve: (r: ListenResult) => void; reject: (err: unknown) => void }[] = [];
   let cancels = 0;

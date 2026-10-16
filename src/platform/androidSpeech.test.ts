@@ -9,7 +9,6 @@ const VOICES: PluginVoice[] = [
   { voiceURI: 'en-us-x-iob-network', name: 'English United States', lang: 'en-US', localService: false, default: false },
 ];
 
-/** A TextToSpeech plugin whose `speak` calls settle when the test says so. */
 function fakeTts() {
   const calls: { options: TTSOptions; resolve: () => void; reject: (err: Error) => void }[] = [];
   let stops = 0;
@@ -25,7 +24,6 @@ function fakeTts() {
   return { plugin, calls, stops: () => stops };
 }
 
-/** Lets settled plugin promises run their handlers. */
 async function tick() {
   for (let i = 0; i < 10; i++) await null;
 }

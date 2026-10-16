@@ -1,6 +1,4 @@
-// The committed gate baseline (baseline.json) and the comparison of a run against it. scripts/android/gate.ts writes
-// the baseline with --save-baseline and checks every other run against it. Node runs this file directly, so it has
-// type imports only.
+// Node runs this file directly, so it has type imports only.
 import type { PoseId } from '../pose/types';
 import type { Backend, GateRun } from './criteria';
 import type { DetectMode } from './page';
@@ -56,7 +54,6 @@ interface CaseComparison {
 
 export interface Comparison {
   readonly cases: readonly CaseComparison[];
-  /** Largest absolute own-score difference. */
   readonly maxDiff: number;
   /** 0 criterion failures and every own-pose score within MAX_DIFF of the baseline. */
   readonly passed: boolean;

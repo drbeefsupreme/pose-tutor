@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The progress photos and the stored TypeSafe key stay on this phone: no cloud backup, no device-to-device transfer. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" path="." />

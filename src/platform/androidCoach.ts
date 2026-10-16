@@ -1,7 +1,3 @@
-// The coach and the voice-command intent: Gemini Nano on the phone writes the debrief (TutorCoach, ./coachPlugin.ts),
-// and jev picks the command with the TypeSafe key kept in the Keystore (TutorSecrets, ./secretsPlugin.ts). Settings
-// uses the DeviceSetup half.
-
 import { nanoCoachPrompt, parseCoachReply } from '../coach/prompt';
 import { chooseIntent, type PostJson } from '../intent/jev';
 import { COMMAND_OPTIONS, type IntentReply } from '../modes/commands';
@@ -18,15 +14,12 @@ const SELF_TEST_POSE = POSE_SPECS.sideChest[0].name;
 interface DeviceCoachDeps {
   readonly coach: TutorCoachPlugin;
   readonly secrets: TutorSecretsPlugin;
-  /** Native HTTP for the jev call. */
   readonly post: PostJson;
-  /** The figure render the self-test sends, as a data URL. */
   readonly selfTestImage: string;
 }
 
 const message = (err: unknown): string => (err instanceof Error ? err.message : String(err));
 
-/** Why the coach cannot write a debrief now, for a status that is not `available`. */
 function notReady(status: NanoStatusResult): string {
   switch (status.status) {
     case 'downloadable':

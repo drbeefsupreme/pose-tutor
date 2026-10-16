@@ -1,6 +1,4 @@
-// Figure rig: forward kinematics of the skinning bones from a FigurePose, and the per-bone dual
-// quaternions that the skin shader blends (skinMaterial.ts). Plain math, no three.js, so the model
-// build and tests can use it too.
+// Plain math, no three.js, so the model build and the tests can use it too.
 import type { BoneKey, FigurePose } from '../pose/types';
 
 export type Vec3 = readonly [number, number, number];
@@ -15,7 +13,6 @@ export interface RigManifest {
   readonly joints: readonly Vec3[];
   /** Sole points as bone index and rest position. The lowest one stays on the floor. */
   readonly contacts: readonly { readonly bone: number; readonly p: Vec3 }[];
-  /** Pose the mesh was baked in. */
   readonly bind: FigurePose;
 }
 
@@ -41,7 +38,6 @@ function mul(a: ArrayLike<number>, ia: number, b: ArrayLike<number>, ib: number,
 /** Rotates (x, y, z) by the unit quaternion at q[iq], written to out at io. */
 function rotate(q: ArrayLike<number>, iq: number, x: number, y: number, z: number, out: Float64Array, io: number): void {
   const qx = q[iq], qy = q[iq + 1], qz = q[iq + 2], qw = q[iq + 3];
-  // v + 2·q.xyz × (q.xyz × v + w·v)
   const cx = qy * z - qz * y + qw * x, cy = qz * x - qx * z + qw * y, cz = qx * y - qy * x + qw * z;
   out[io] = x + 2 * (qy * cz - qz * cy);
   out[io + 1] = y + 2 * (qz * cx - qx * cz);
@@ -54,7 +50,6 @@ export class Rig {
   readonly bind: PoseState;
   private readonly m: RigManifest;
   private readonly restFloor: number;
-  // world transforms (rotation quaternion, translation) of the last solved pose and of the bind pose
   private readonly wq: Float64Array;
   private readonly wt: Float64Array;
   private readonly bq: Float64Array;
@@ -137,7 +132,6 @@ export class Rig {
     const n = this.bones.length;
     for (let i = 0; i < n; i++) {
       const o = i * 4;
-      // R = Q · conj(Q0)
       tmp[0] = -bq[o]; tmp[1] = -bq[o + 1]; tmp[2] = -bq[o + 2]; tmp[3] = bq[o + 3];
       mul(wq, o, tmp, 0, tmp, 0);
       // Keep neighbors in one hemisphere so the shader's blend does not cancel.
@@ -146,11 +140,9 @@ export class Rig {
       const d = ref < 0 ? tmp[3] : tmp[0] * real[ref] + tmp[1] * real[ref + 1] + tmp[2] * real[ref + 2] + tmp[3] * real[ref + 3];
       if (d < 0) { tmp[0] = -tmp[0]; tmp[1] = -tmp[1]; tmp[2] = -tmp[2]; tmp[3] = -tmp[3]; }
       const rx = tmp[0], ry = tmp[1], rz = tmp[2], rw = tmp[3];
-      // t = T − R·T0
       rotate(tmp, 0, bt[i * 3], bt[i * 3 + 1], bt[i * 3 + 2], tmp, 0);
       const tx = wt[i * 3] - tmp[0], ty = wt[i * 3 + 1] - tmp[1], tz = wt[i * 3 + 2] - tmp[2];
       real[o] = rx; real[o + 1] = ry; real[o + 2] = rz; real[o + 3] = rw;
-      // dual = ½ (t, 0) · R
       dual[o] = 0.5 * (tx * rw + ty * rz - tz * ry);
       dual[o + 1] = 0.5 * (-tx * rz + ty * rw + tz * rx);
       dual[o + 2] = 0.5 * (tx * ry - ty * rx + tz * rw);
@@ -180,7 +172,6 @@ export class Rig {
     for (let i = 0; i < joints.length; i++) {
       const p = parent[i], o = i * 4;
       const [jx, jy, jz] = joints[i];
-      // t = t_parent + Q_parent · (j − q·j)
       rotate(s.q, o, jx, jy, jz, tmp, 0);
       const pq = p < 0 ? yq : wq, po = p < 0 ? 0 : p * 4;
       rotate(pq, po, jx - tmp[0], jy - tmp[1], jz - tmp[2], tmp, 0);

@@ -7,13 +7,11 @@ import type { Band, Metrics, PoseId, PoseSpec } from './types';
 
 const calibration = calibrate(landmarks(BODIES.relaxedFront));
 
-/** What the live loop does with one camera frame of `body` while `id` is called. */
 function call(id: PoseId, body: Body, framing?: Framing) {
   const lm = landmarks(body, framing);
   return scoreCall(id, measure(lm, { calibration }), classifyFacing(lm));
 }
 
-/** A bare spec with checks on stanceRatio, then wristGap, to observe the falloff and the fault order directly. */
 function spec(...bands: readonly [Band, number][]): PoseSpec {
   return {
     id: 'relaxedFront',

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { BODIES, landmarks, moved } from '../pose/fixtures';
 import { mirrorFigure, nextLimbs, readLimbs, REST_ANGLES, REST_LIMBS } from './mirror';
 
-// The athlete's right arm straight out to the image left and the left arm straight up.
 const RIGHT_OUT_LEFT_UP = moved(BODIES.relaxedFront, {
   rightShoulder: [0.38, 0.3],
   rightElbow: [0.24, 0.3],

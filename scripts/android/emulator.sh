@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Starts the pose-tutor emulator (API 35, google_apis x86_64) headless on port 5560 and waits until it has booted.
-# The AVD is created on first use. The front camera is the emulated scene, or CAMERA=<video file> (for example from
-# camera-video.sh). The host webcam is never used. `emulator.sh stop` shuts it down.
+# Usage: [CAMERA=<video file>] emulator.sh [stop]
 # The GPU is the host's (`-gpu host`, through the X display): with SwiftShader the emulator exits when the app opens the
 # camera while the WebView renders the figure. MediaPipe still runs on the CPU here.
 set -euo pipefail

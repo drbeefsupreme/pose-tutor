@@ -14,7 +14,6 @@ import org.json.JSONObject
 
 internal const val TAG = "TutorPose"
 
-/** In the APK assets (npm run fetch-model). */
 private const val MODEL = "pose_landmarker_full.task"
 
 /** The `CameraFailure` codes of src/platform/types.ts. */
@@ -42,10 +41,6 @@ internal class DelegatePolicy {
         gpuFailed = true
     }
 
-    /**
-     * A landmarker on the preferred delegate, or on the CPU when the GPU one cannot be built.
-     * Throws [TrackingUnavailable] when neither builds.
-     */
     fun create(
         context: Context,
         mode: RunningMode,

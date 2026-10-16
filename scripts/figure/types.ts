@@ -1,4 +1,3 @@
-// Shared types for the procedural anatomy model.
 // Units: meters. +Y up, figure faces +Z, +X is the figure's LEFT side.
 
 export type V3 = [number, number, number];
@@ -8,7 +7,6 @@ export type BoneName =
   | 'scap' | 'upperarm' | 'forearm' | 'hand'
   | 'thigh' | 'shin' | 'foot';
 
-/** A point attached to a bone. `p` is the absolute rest-pose position. */
 export interface BPt { bone: BoneName; p: V3 }
 
 export type Region =
@@ -78,7 +76,6 @@ export interface Anatomy {
   fat: FatDeposit[];
 }
 
-/** Soft-tissue and surface-detail state the field is evaluated in. */
 export interface FieldState {
   fat: number;       // 0 lean .. 1 soft/off-season
   sep: number;       // 0 .. 1 groove depth at muscle borders

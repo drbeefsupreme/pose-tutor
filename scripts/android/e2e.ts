@@ -1,24 +1,5 @@
 // Camera loops on Android: npm run android:e2e [-- --build | --no-build] [-- --only=learn,hold,judge,mirror,device]
 // (--only drives some phases, for work on one mode; the report marks such a run as partial.)
-// Renders one camera clip of the figure per mode and makes the clip of the current mode the front camera of
-// emulator-5564 (camera-video.sh). When the camera stays closed for a few seconds, the emulator reads the clip file
-// again at the next camera start and plays it from its start, so the driver puts a mode's clip in place, waits, and then
-// starts that mode. It installs the APK and drives index.html over CDP:
-// - Learn a pose to a hit: a photo in app storage (adb run-as) and a voice command handed to the Android voice input
-//   (window.__tutorVoice) that moves the build-up on (keywords, as no TypeSafe key is stored yet).
-// - Hold drill, 10 s on front double biceps: it completes with a mean score and steadiness, with no reset.
-// - Judge's calls: the first 3 calls (relaxed front, quarter turn, relaxed back) each reach a hit.
-// - Mirror: the figure's upper arms follow the clip.
-// - Phone only: Settings shows the on-device coach as unavailable (the emulator has no AICore) and its self-test says so.
-//   The TypeSafe key (TYPESAFE_API_KEY, else ./.env.local) goes into TutorSecrets through the test hook
-//   window.__tutorSetup; Settings then shows it as saved, never the key. A free phrase is decided by jev from the
-//   phone (one real jev call) and acts, and a hit shows the "not available on this phone" coach note, not an error.
-// Then: the emulator stayed up, the native TTS finished at least one spoken line (window.__tutorSpeech, fed by the
-// plugin's done callbacks; logcat kept as evidence), and the network checks: the WebView requested only its own origin
-// (CDP Network log), every CapacitorHttp call went to the jev host (Capacitor.toNative watched), the app's sockets
-// (/proc/net, sampled for the whole run) reached only that host's addresses, the page had no CSP violation, and the key
-// is not in logcat. Exits 1 when a check fails.
-// Writes docs/e2e-report.md; the clips, screenshots, the photo and logs go to docs/shots/e2e/.
 import { appendFileSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
@@ -36,10 +17,8 @@ import { adb, adbBytes, APP_ID, AVD, main, median, ROOT, runVisible, SERIAL, sle
 
 const REPORT = join(ROOT, 'docs/e2e-report.md');
 const SHOTS = join(ROOT, 'docs/shots/e2e');
-/** One line per run: when, the result and the time of each check. Kept across runs for the report's run history. */
 const HISTORY = join(SHOTS, 'history.jsonl');
 const WORK = join(tmpdir(), 'pose-tutor-e2e');
-/** The emulator's front camera. The driver replaces it with the clip of each mode. */
 const CAMERA = join(WORK, 'camera.mp4');
 const CAMERA_IDLE_MS = 5000;
 const POSE: PoseId = 'frontDoubleBiceps';
@@ -47,20 +26,14 @@ const SECONDS_PER_FRAME = 0.25;
 const TRANSITION_FRAMES = 6;
 const SETTINGS: TutorSettings = { voiceCommands: true, debrief: false, holdGoal: 10 };
 const VOICE_PHRASE = 'next one please';
-/** A phrase for the jev intent; the check passes only when jev, not the keywords, decides it. */
 const FREE_PHRASE = 'could you go to the next one';
 const MIRROR_MIN_CHANGE_DEG = 30;
 const COACH_UNAVAILABLE = 'On-device coach is not available on this phone:';
 const JEV_HOST = new URL(JEV_ENDPOINT).host;
-/**
- * Hosts that Google's SDKs in the app (ML Kit GenAI) send usage metrics to, with no image and no prompt. They are
- * disclosed in Settings and the README and reported as their own category; the app's own requests go only to JEV_HOST.
- */
+/** Hosts that Google's SDKs in the app (ML Kit GenAI) send usage metrics to, with no image and no prompt. */
 const TELEMETRY_HOSTS = ['firebaselogging.googleapis.com'];
-/** The page's own origin; data: URLs never leave the WebView. */
 const PAGE_ORIGINS = [APP_ORIGIN, 'data:'];
 
-/** The TypeSafe key from TYPESAFE_API_KEY, else from ./.env.local (`TYPESAFE_API_KEY=value`). Never printed. */
 function typesafeKey(): string | null {
   const fromEnv = process.env.TYPESAFE_API_KEY?.trim();
   if (fromEnv) return fromEnv;
@@ -73,11 +46,7 @@ function typesafeKey(): string | null {
   return null;
 }
 
-/**
- * Runs in every page the app loads, before the page's scripts: reports CSP violations, and wraps Capacitor.toNative,
- * which every plugin call goes through, to report the plugin, the method and, for CapacitorHttp, only the URL's host
- * (never the options: they hold the key).
- */
+/** Every plugin call goes through Capacitor.toNative. Report only the URL's host: the options hold the key. */
 const PAGE_WATCH = `(() => {
   console.debug('[watch] page');
   document.addEventListener('securitypolicyviolation', (e) => console.warn('[csp] ' + e.effectiveDirective + ' ' + e.blockedURI));
@@ -116,11 +85,9 @@ interface Hold {
 }
 
 /**
- * The poses of each camera clip, each shown for `seconds`. TRANSITION_FRAMES in-between frames lead from each pose to
- * the next, and from the last pose back to the first, where the emulator loops the clip. Judge's clip is the order of
- * the first calls; the yaw of the in-between frames turns the figure from one call to the next. A call has 25 s from
- * its start, which is 2.5 s after the previous hit. The quarter turn gets 20 s: on the emulator, single frames of the
- * side view score under the hold line (76-79), so a 3 s hold can take several tries (run of 2026-10-12, 12 s timed out).
+ * The emulator loops each clip, so the in-between frames also lead from the last pose back to the first. The quarter
+ * turn gets 20 s: on the emulator, single frames of the side view score under the hold line (76-79), so a 3 s hold can
+ * take several tries.
  */
 const CLIPS: Readonly<Record<ClipId, readonly Hold[]>> = {
   learn: [
@@ -144,7 +111,6 @@ const CLIPS: Readonly<Record<ClipId, readonly Hold[]>> = {
 const CLIP_IDS = Object.keys(CLIPS) as ClipId[];
 const MOVE_SECONDS = TRANSITION_FRAMES * SECONDS_PER_FRAME;
 
-/** The frames of one loop of `clip`, each with how long it shows. */
 function clipFrames(clip: readonly Hold[]): { readonly spec: FrameSpec; readonly seconds: number }[] {
   return clip.flatMap(({ pose, seconds }, i) => {
     const to = clip[(i + 1) % clip.length].pose;
@@ -157,10 +123,8 @@ const clipVideo = (id: ClipId): string => join(SHOTS, `camera-${id}.mp4`);
 const describeClip = (id: ClipId): string =>
   `${CLIPS[id].map((h) => `${h.pose} ${h.seconds} s`).join(', ')}; ${CLIPS[id].reduce((sum, h) => sum + h.seconds + MOVE_SECONDS, 0)} s loop`;
 
-/** Renders every distinct frame once, then makes one video per clip (SHOTS/camera-<clip>.mp4). */
 async function makeClips(): Promise<void> {
   const index = new Map<string, number>();
-  /** Each clip's frames as render numbers: every distinct frame is rendered once. */
   const loops = CLIP_IDS.map((id) => ({
     id,
     frames: clipFrames(CLIPS[id]).map(({ spec, seconds }) => {
@@ -201,7 +165,6 @@ async function useClip(id: ClipId): Promise<void> {
   await sleep(CAMERA_IDLE_MS);
 }
 
-/** The part of the tutor state the checks read (window.__tutorState in TutorRun.tsx). */
 interface Seen {
   readonly camera: Snapshot['camera'];
   readonly calibration: Snapshot['calibration'];
@@ -227,21 +190,14 @@ const SEEN = `(() => {
   };
 })()`;
 
-/**
- * One sample of RECORD: page time (ms), the native pose frames so far (all, and with landmarks), the tutor state, and
- * the rotation (degrees) of the figure's upper arms when the figure is live (Mirror).
- */
 interface Sample {
   readonly t: number;
   readonly frames: number;
   readonly landmarks: number;
   readonly camera?: string;
   readonly stage?: Stage['kind'];
-  /** The drill clock's label: 'Hold' only while the Hold drill holds. */
   readonly clock?: string;
-  /** Why the drill waits for the athlete, while the stage is framing. */
   readonly reason?: string;
-  /** Which way the app sees the athlete facing. */
   readonly facing?: string;
   readonly heldMs?: number;
   readonly score?: number;
@@ -249,10 +205,6 @@ interface Sample {
   readonly upperarmR?: number;
 }
 
-/**
- * Samples the tutor every 100 ms in the page into window.__e2eSamples, so a short change is not lost while the driver
- * waits. The native frames are counted from the TutorPose plugin's frame events, once per page.
- */
 const RECORD = `(() => {
   if (!window.__e2eFrames) {
     const counts = { n: 0, landmarks: 0 };
@@ -277,25 +229,19 @@ const STOP_RECORD = `(() => { clearInterval(window.__e2eTimer); return window.__
 const ARMS = ['upperarmL', 'upperarmR'] as const;
 type Arm = (typeof ARMS)[number];
 
-/** A value at a time in seconds after the camera started. */
 interface TimedValue {
   readonly t: number;
   readonly v: number;
 }
 
-/** How one upper arm of the Mirror figure followed the clip. Rotations in degrees. */
 interface ArmFollow {
   readonly arm: Arm;
-  /** At the start: the clip's relaxed front. */
   readonly start: number;
-  /** The first rise of more than MIRROR_MIN_CHANGE_DEG over `start`: front double biceps. */
   readonly up: TimedValue | undefined;
   readonly top: TimedValue | undefined;
-  /** The first fall of more than MIRROR_MIN_CHANGE_DEG from `top`: the relaxed front of the next loop. */
   readonly down: TimedValue | undefined;
 }
 
-/** Reads ArmFollow from the recorder's samples. The rotation is a rolling median over 5 samples (0.5 s), from the first landmarks on. */
 function armFollow(all: readonly Sample[], arm: Arm): ArmFollow {
   const live = all.find((s) => s.camera === 'live')?.t ?? NaN;
   const raw = all.filter((s) => s.landmarks > all[0].landmarks).flatMap((s) => (s[arm] === undefined ? [] : [{ t: (s.t - live) / 1000, v: s[arm] }]));
@@ -314,7 +260,6 @@ function armFollow(all: readonly Sample[], arm: Arm): ArmFollow {
   return { arm, start, up, top, down };
 }
 
-/** One spoken line as the Android speech engine logs it (window.__tutorSpeech, android.ts). Times: Date.now(). */
 interface Utterance {
   readonly text: string;
   readonly voice: string | undefined;
@@ -322,7 +267,6 @@ interface Utterance {
   readonly endedAt?: number;
   readonly end?: 'done' | 'error' | 'cancelled';
   readonly error?: string;
-  /** The preferred voice that failed before the line was said with the engine default. */
   readonly failedVoice?: string;
 }
 
@@ -331,7 +275,6 @@ interface Check {
   readonly name: string;
   readonly ok: boolean;
   readonly detail: string;
-  /** From the previous check of the run, or the start of its phase, to this check. */
   readonly seconds: number;
 }
 
@@ -342,14 +285,12 @@ interface PhaseRecord {
   readonly name: string;
   readonly clip: ClipId;
   readonly seconds: number;
-  /** Native pose frames per second during the phase, and of those with landmarks. */
   readonly framesPerSecond: number;
   readonly landmarksPerSecond: number;
 }
 
 interface Event {
   readonly phase: string;
-  /** Seconds after the start of the phase. */
   readonly t: number;
   readonly text: string;
 }
@@ -358,7 +299,6 @@ interface HistoryEntry {
   readonly when: string;
   readonly passed: boolean;
   readonly seconds: number;
-  /** The --only phases of a partial run; undefined for a full run. */
   readonly only: string | undefined;
   readonly checks: readonly Pick<Check, 'name' | 'ok' | 'seconds'>[];
 }
@@ -372,7 +312,6 @@ interface ReportInput {
   readonly history: readonly HistoryEntry[];
   readonly logcatLines: number;
   readonly device: string;
-  /** The phases this run drove: all of PHASE_IDS, or the --only subset. */
   readonly only: readonly PhaseId[];
   readonly seconds: number;
 }
@@ -475,7 +414,6 @@ main(async (cleanup) => {
   const nativeCalls: NativeCall[] = [];
   const cspViolations: string[] = [];
   const pageRequests: string[] = [];
-  /** How many pages ran PAGE_WATCH, and in how many it wrapped Capacitor: the CSP and plugin checks count only then. */
   const watched = { page: 0, capacitor: 0 };
   const app = await startApp((type, text) => {
     if (text === '[watch] page') watched.page++;
@@ -522,7 +460,6 @@ main(async (cleanup) => {
     if (live.camera.kind !== 'live') throw new Error(`the camera is not live (${JSON.stringify(live.camera)}), so the drive stops here`);
     return live;
   };
-  /** Ends Learn's build-up with the Space key. */
   const endBuildUp = async () => {
     for (let i = 0; i < 20 && (await seen())?.stage?.kind === 'step'; i++) {
       await ev(`window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }))`);
@@ -540,7 +477,6 @@ main(async (cleanup) => {
   let phaseName = '';
   let phaseStart = runStart;
   let mark = runStart;
-  /** Records a check. `at` (Date.now()) is when the run saw the result, if that was before this call. */
   const check = (name: string, ok: boolean, detail: string, at = Date.now()) => {
     const now = Math.max(at, mark);
     checks.push({ phase: phaseName, name, ok, detail, seconds: (now - mark) / 1000 });
@@ -553,10 +489,6 @@ main(async (cleanup) => {
     states.push({ phase: phaseName, t, label: text, state });
   };
   const samples: Partial<Record<string, Sample[]>> = {};
-  /**
-   * Runs one phase with `clip` as the camera and the page recorder on, records a failure as a check, and goes back to
-   * the home screen. Skipped when --only leaves `id` out.
-   */
   const phase = async (id: PhaseId, name: string, clip: ClipId, body: () => Promise<void>) => {
     if (!only.includes(id)) return;
     phaseName = name;
@@ -686,7 +618,6 @@ main(async (cleanup) => {
     await startMode('judge');
     await cameraLive();
     let last = '';
-    /** When the page showed the rest after each call (index 0: call 1), for the check times. */
     const ended: number[] = [];
     const end = await waitFor(`the end of call ${calls}`, (calls * 25 + 30) * 1000, async () => {
       const s = await seen();
@@ -748,7 +679,6 @@ main(async (cleanup) => {
     );
   });
 
-  /** Whether the real key went onto the device, for the logcat check. */
   let keyStored = false;
   await phase('device', 'Phone only: on-device coach and jev', 'learn', async () => {
     const stateOf = (section: string) =>
@@ -774,7 +704,6 @@ main(async (cleanup) => {
     const key = typesafeKey();
     if (key === null) throw new Error('No TypeSafe key: set TYPESAFE_API_KEY in the environment or in .env.local.');
     const keyBefore = await stateOf('device-key');
-    // The key travels only inside this one CDP message; no error or log line repeats the expression.
     const stored = (await app.cdp.send('Runtime.evaluate', {
       expression: `window.__tutorSetup.saveKey(${JSON.stringify(key)}).then(() => true, () => false)`,
       awaitPromise: true,
@@ -880,7 +809,6 @@ main(async (cleanup) => {
     `uid ${appUid()}, /proc/net every 0.5 s. ${JEV_HOST}: ${sorted.jev.join(', ') || 'none'}. Google SDK telemetry (${TELEMETRY_HOSTS.join(', ')} or a Google 1e100.net address): ${sorted.telemetry.join(', ') || 'none'}. Other: ${sorted.other.join(', ') || 'none'}`,
   );
   const appViolations = [...cspViolations];
-  // A control: an inline script, which the CSP blocks without any network request, must be reported.
   await ev(`(() => { const s = document.createElement('script'); s.textContent = '0'; document.head.append(s); s.remove(); })()`).catch(() => undefined);
   await sleep(500);
   const control = cspViolations.slice(appViolations.length);

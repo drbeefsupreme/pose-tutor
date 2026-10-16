@@ -1,6 +1,3 @@
-// A minimal Chrome DevTools Protocol client over WebSocket, for the app's WebView (through `adb forward`) and for
-// desktop Chrome.
-
 interface CdpMessage {
   readonly id?: number;
   readonly method?: string;
@@ -33,9 +30,8 @@ interface ConsoleEvent {
 
 export interface Cdp {
   send(method: string, params?: object): Promise<unknown>;
-  /** Evaluates `expression` in the page (awaiting a returned promise) and returns its JSON value. */
   evaluate(expression: string, timeoutMs?: number): Promise<unknown>;
-  /** Calls `listener` with the params of every `method` event (enable its domain first). */
+  /** CDP sends `method` events only after their domain is enabled. */
   on(method: string, listener: (params: unknown) => void): void;
   close(): void;
 }
@@ -51,7 +47,6 @@ export async function targets(httpPort: number): Promise<readonly Target[]> {
   return (await res.json()) as readonly Target[];
 }
 
-/** Connects to a page target. Page console lines go to `onConsole` (type, text). */
 export async function connect(wsUrl: string, onConsole?: (type: string, text: string) => void): Promise<Cdp> {
   const ws = new WebSocket(wsUrl);
   const opened = Promise.withResolvers<void>();

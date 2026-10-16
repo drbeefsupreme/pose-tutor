@@ -1,5 +1,4 @@
-// The JavaScript face of the native on-device coach (Capacitor plugin name "TutorCoach"): Gemini Nano through the
-// ML Kit GenAI Prompt API, image plus text in, text out. The Kotlin side lives in
+// The JavaScript face of the native plugin "TutorCoach". The Kotlin side lives in
 // android/app/src/main/java/io/github/drbeefsupreme/posetutor/coach/ and must match this file exactly.
 
 import type { PluginListenerHandle } from '@capacitor/core';

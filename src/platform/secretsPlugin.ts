@@ -2,7 +2,6 @@
 // with an AES-GCM key held in the Android Keystore (non-exportable) and kept in app-private storage, excluded from
 // backup. The Kotlin side lives in android/app/src/main/java/io/github/drbeefsupreme/posetutor/secrets/.
 
-/** The only secret the app stores today. */
 export type SecretKey = 'typesafe-api-key';
 
 /** Rejections carry `code`: `badKey` (unknown key name) or `keystore` (the Keystore failed; `message` says how). */

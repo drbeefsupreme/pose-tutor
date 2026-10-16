@@ -3,9 +3,6 @@ import { field, storedObject } from './stored';
 import { JUDGE_ORDER, type CallResult } from './judge';
 import type { Summary } from './mode';
 
-// Personal bests for Judge's calls, kept in localStorage. The round best counts complete rounds only; each pose
-// keeps its best score and its fastest hit from any round.
-
 export const BEST_KEY = 'posing-judge-best';
 
 interface PoseBest {
@@ -53,7 +50,6 @@ function poseBest(prev: PoseBest | undefined, call: CallResult): PoseBest | unde
   };
 }
 
-/** The record after one round, and which bests the round set. */
 export function mergeBest(best: JudgeBest, summary: Extract<Summary, { mode: 'judge' }>, at: string): { best: JudgeBest; news: NewBests } {
   const poses = { ...best.poses };
   const improved: PoseId[] = [];

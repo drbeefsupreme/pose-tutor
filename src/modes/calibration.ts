@@ -2,13 +2,9 @@ import type { PoseLandmarks } from '../pose/landmarks';
 import { calibrate, type Calibration } from '../pose/metrics';
 import { inView } from '../pose/session';
 
-// The relaxed-front capture at the start of a tutor session. The athlete stands relaxed, facing the camera, in
-// full view; after `steadyMs` of such frames the baseline is the mean of their calibrations.
-
 const CALIBRATION_STEADY_MS = 1500;
 
 export interface Capture {
-  /** When the current run of usable frames began. */
   readonly since: number | undefined;
   readonly samples: readonly Calibration[];
 }

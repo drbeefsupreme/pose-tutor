@@ -3,9 +3,6 @@ import { POSE_SPECS } from '../pose/spec';
 import type { PoseId } from '../pose/types';
 import { say, sessionAfter, sessionStage, spoken, type Mode, type Step } from './mode';
 
-// Learn a pose: the build-up steps one at a time (the athlete moves on by voice or key), then free correction by
-// the cue scheduler until the pose is hit.
-
 interface LearnState {
   readonly pose: PoseId;
   readonly stage:

@@ -1,5 +1,4 @@
-// The device parts of Settings: Gemini Nano on the phone (status, download, self-test) and the TypeSafe key for voice
-// commands. The key is write-only here: the page shows whether one is stored, never the key.
+// The TypeSafe key is write-only here: the page shows whether one is stored, never the key.
 
 import { useState, type FormEvent } from 'react';
 import { platform } from '../platform/android';

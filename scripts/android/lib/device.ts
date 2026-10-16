@@ -1,5 +1,3 @@
-// The harness emulator (AVD pose-tutor-harness, emulator-5564), the debug APK on it, and a CDP connection to the app's
-// WebView. Every step converges: a run after a crashed run adopts or replaces what that run left behind.
 import { spawn } from 'node:child_process';
 import { appendFileSync, existsSync, openSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
@@ -12,9 +10,7 @@ const BUILD_LOCK = join(tmpdir(), 'pose-tutor-android-build.lock');
 const APK_DIR = join(ROOT, 'android/app/build/outputs/apk/debug');
 const SYSTEM_IMAGE = 'system-images;android-35;google_apis;x86_64';
 const BOOT_TIMEOUT_MS = 240_000;
-/** How long the app's page target must stay the same before the harness connects. */
 const SETTLE_MS = 4000;
-/** The Capacitor app serves its web part from this origin. */
 export const APP_ORIGIN = 'https://localhost';
 export const EMULATOR_LOG = join(tmpdir(), `${AVD}-emulator.log`);
 
@@ -27,7 +23,6 @@ const alive = (pid: number): boolean => {
   }
 };
 
-/** One harness run at a time owns emulator-5564. A lock left by a dead run is taken over. */
 export function lockHarness(): () => void {
   if (existsSync(LOCK)) {
     const owner = Number(readFileSync(LOCK, 'utf8'));
@@ -61,7 +56,6 @@ async function killEmulator(pid?: number): Promise<void> {
 }
 
 export interface Emulator {
-  /** Whether this run started it (and so stops it). */
   readonly started: boolean;
   stop(): Promise<void>;
 }
@@ -78,14 +72,11 @@ const GPU_MODES = {
 type GpuMode = keyof typeof GPU_MODES;
 
 interface EmulatorOptions {
-  /** The front camera: 'none', 'emulated' or 'videofile:<path>'. */
   readonly camera: string;
   readonly gpu: GpuMode;
-  /** Keep an emulator that is already running (its camera and GPU mode may differ); otherwise restart it. */
   readonly reuse: boolean;
 }
 
-/** Boots emulator-5564 headless. */
 export async function bootEmulator({ camera, gpu, reuse }: EmulatorOptions): Promise<Emulator> {
   if (emulatorRunning()) {
     if (reuse) {
@@ -130,7 +121,6 @@ export async function bootEmulator({ camera, gpu, reuse }: EmulatorOptions): Pro
   return { started: true, stop };
 }
 
-/** Newest modification time under `path`, skipping `skip` directories. */
 function newest(path: string, skip: readonly string[]): number {
   if (!existsSync(path)) return 0;
   const stat = statSync(path);
@@ -148,11 +138,6 @@ const APK_INPUTS = ['src', 'public', 'vite.config.ts', 'scripts/android/build.sh
 
 export type BuildMode = 'auto' | 'always' | 'never';
 
-/**
- * The debug APK for the emulator (x86_64), built by build.sh when `mode` is 'always', or 'auto' and the APK is
- * missing or older than its sources. Builds hold the shared build lock, since other work builds the same project.
- * Throws when the APK lacks one of `entries` (pages under assets/public).
- */
 export function ensureApk(mode: BuildMode, entries: readonly string[]): string {
   const apk = join(APK_DIR, 'app-x86_64-debug.apk');
   const skip = [join(ROOT, 'android/app/src/main/assets')];
@@ -171,7 +156,6 @@ export function ensureApk(mode: BuildMode, entries: readonly string[]): string {
   return apk;
 }
 
-/** Installs the APK with its runtime permissions granted and the app's data cleared. */
 export function installApp(apk: string): void {
   adb('install', '-r', '-g', apk);
   adb('shell', 'pm', 'clear', APP_ID);
@@ -180,12 +164,10 @@ export function installApp(apk: string): void {
 
 export interface AppPage {
   readonly cdp: Cdp;
-  /** Loads another page of the app (a path under APP_ORIGIN) and waits until it has loaded. */
   open(path: string): Promise<void>;
   close(): void;
 }
 
-/** Starts the app and connects to its WebView over the DevTools socket that debug builds open. */
 export async function startApp(onConsole?: (type: string, text: string) => void): Promise<AppPage> {
   adb('shell', 'am', 'force-stop', APP_ID);
   adb('shell', 'am', 'start', '-W', '-n', `${APP_ID}/.MainActivity`);
@@ -193,8 +175,8 @@ export async function startApp(onConsole?: (type: string, text: string) => void)
 }
 
 /**
- * Connects to the running app's WebView. While a DevTools client is attached, the WebView sets KEEP_SCREEN_ON on the
- * app's window, so a check of the screen timeout closes the page first and attaches again afterwards.
+ * While a DevTools client is attached, the WebView sets KEEP_SCREEN_ON on the app's window, so a check of the screen
+ * timeout closes the page first and attaches again afterwards.
  */
 export async function attachApp(onConsole?: (type: string, text: string) => void): Promise<AppPage> {
   const pid = await waitFor('the app process', 30_000, () => adb('shell', 'pidof', APP_ID).trim() || undefined);
@@ -227,7 +209,6 @@ export async function attachApp(onConsole?: (type: string, text: string) => void
   };
 }
 
-/** A PNG screenshot of the device screen (the native camera preview included). */
 export function screenshot(path: string): void {
   writeFileSync(path, adbBytes('exec-out', 'screencap', '-p'));
 }

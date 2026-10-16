@@ -1,4 +1,3 @@
-/* ---------- progress photos (src/progress) ---------- */
 .progress {
   display: flex; flex-direction: column; gap: 16px; padding: 20px 22px 32px; overflow: auto;
   background: radial-gradient(ellipse at 50% 0%, #1b2134, var(--bg) 65%);
@@ -63,7 +62,6 @@
 .progress-slot-mark.before { background: var(--a); box-shadow: 0 0 10px var(--a); }
 .progress-slot-mark.after { background: var(--b); box-shadow: 0 0 10px var(--b); }
 
-/* compare */
 .progress-compare { display: flex; flex-direction: column; gap: 10px; }
 .progress-compare-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .progress-compare-bar .seg { position: static; }
@@ -108,7 +106,6 @@
 .progress-blend input { width: 100%; accent-color: var(--b); }
 .progress-blend output { grid-column: 1 / -1; text-align: center; font-weight: 600; color: var(--fg); }
 
-/* trend */
 .progress-trend { margin: 0; padding: 14px 16px 6px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); max-width: 760px; }
 .progress-trend figcaption { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .progress-trend figcaption .hint { margin: 0; }
@@ -128,7 +125,6 @@
 .progress-trend-point text { font-family: var(--display); font-size: 15px; fill: var(--fg); }
 .progress-trend-point:hover circle, .progress-trend-point:focus-visible circle { stroke: var(--fg); }
 
-/* confirm */
 .progress-dialog {
   max-width: 420px; padding: 22px 24px; border: 1px solid var(--border); border-radius: var(--radius);
   background: var(--panel); color: var(--fg); box-shadow: 0 6px 0 #05070c, 0 0 40px rgba(255, 92, 116, 0.18);

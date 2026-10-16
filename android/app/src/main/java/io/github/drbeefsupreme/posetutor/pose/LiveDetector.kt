@@ -18,14 +18,12 @@ import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
-/** Frames per second the detector takes at most. */
 private const val MAX_RATE = 30
 
 /** The first answer can include GPU warm-up; after that a frame takes tens of milliseconds. */
 private const val FIRST_ANSWER_MS = 3000L
 private const val STALL_MS = 1000L
 
-/** At most [perSecond] admissions in any second, spaced at least 90 % of the even gap apart. */
 internal class RateGate(private val perSecond: Int) {
     private val admitted = LongArray(perSecond) { Long.MIN_VALUE / 2 }
     private var oldest = 0
@@ -40,22 +38,15 @@ internal class RateGate(private val perSecond: Int) {
     }
 }
 
-/**
- * CameraX analyzer that runs upright RGBA frames through a LIVE_STREAM landmarker, one frame in flight at a time.
- * Everything except the result and error listeners runs on the analysis executor, so the frame bitmap is never
- * written while MediaPipe or [capture] reads it.
- */
 internal class LiveDetector(
     private val context: Context,
     private val policy: DelegatePolicy,
     private val onFrame: (JSObject) -> Unit,
-    /** The first result of a landmarker, with its delegate. */
     private val onAnswering: (Delegate) -> Unit,
     private val onUnavailable: (TrackingUnavailable) -> Unit,
 ) : ImageAnalysis.Analyzer {
     private var landmarker: PoseLandmarker? = null
 
-    /** Read by the result listener; set before the first detection of each landmarker. */
     @Volatile
     private var delegate = Delegate.CPU
     private var unavailable = false
@@ -65,12 +56,10 @@ internal class LiveDetector(
     private var packed: ByteBuffer? = null
     private var blank: Bitmap? = null
 
-    /** uptime of the frame in flight, 0 when none. Written by both threads. */
     private val inFlightSince = AtomicLong(0)
     private val answered = AtomicBoolean(false)
     private val resetRequested = AtomicBoolean(false)
 
-    /** Timestamp of the blank reset frame, whose result is not reported. */
     @Volatile
     private var blankTimestamp = -1L
 
@@ -93,7 +82,6 @@ internal class LiveDetector(
         }
     }
 
-    /** False while a frame is in flight; recovers a landmarker that stopped answering. */
     private fun readyFor(now: Long): Boolean {
         val since = inFlightSince.get()
         if (since == 0L) return true
@@ -136,7 +124,6 @@ internal class LiveDetector(
         answered.set(false)
     }
 
-    /** Copies the upright RGBA frame into the reused bitmap, dropping any row padding. */
     private fun fill(image: ImageProxy): Bitmap {
         val width = image.width
         val height = image.height
@@ -168,7 +155,6 @@ internal class LiveDetector(
                 .apply { eraseColor(Color.BLACK) }
                 .also { blank = it }
 
-    /** The latest detected frame as a JPEG data URL at most [maxWidth] pixels wide. Call on the analysis executor. */
     fun capture(maxWidth: Int): String? {
         val source = frame ?: return null
         val scale = minOf(1f, maxWidth.toFloat() / source.width)
@@ -183,7 +169,6 @@ internal class LiveDetector(
         return "data:image/jpeg;base64," + Base64.encodeToString(jpeg.toByteArray(), Base64.NO_WRAP)
     }
 
-    /** Call on the analysis executor after the analyzer is cleared. */
     fun close() {
         closeLandmarker()
         frame = null

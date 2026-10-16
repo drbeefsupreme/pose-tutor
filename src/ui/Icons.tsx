@@ -1,4 +1,4 @@
-// Small stroke icons (24x24). Decorative unless a label is given.
+// Decorative unless a label is given.
 import type { ReactNode, SVGProps } from 'react';
 
 type P = SVGProps<SVGSVGElement> & { size?: number; label?: string };

@@ -21,9 +21,6 @@ import { POSE_SPECS } from '../pose/spec';
 import type { Facing, PoseId, PoseScore } from '../pose/types';
 import type { PhotoMeta } from '../progress/types';
 
-// The tutor's live loop: pose source → smoother → score → drill, and the drill's effects → speech, photos and the
-// coach. Everything that decides what happens lives in src/modes; this shell wires it to the device (src/platform).
-
 export interface RunSpec {
   readonly mode: ModeId;
   /** The pose for Learn and Hold; Judge and Mirror ignore it. */
@@ -31,7 +28,6 @@ export interface RunSpec {
   readonly holdGoal: HoldGoal;
 }
 
-/** The relaxed-front baseline for this tutor session: measured, skipped, or not taken yet. */
 export type SessionCalibration = Calibration | 'skipped' | undefined;
 
 type CameraState =
@@ -58,7 +54,6 @@ export interface Snapshot {
   readonly calibration: { readonly kind: 'capturing'; readonly progress: number } | { readonly kind: 'ready'; readonly calibrated: boolean };
   readonly view: DrillView | undefined;
   readonly score: number | undefined;
-  /** Which way the camera sees the athlete facing. */
   readonly facing: Facing | undefined;
   readonly faults: readonly string[];
   readonly debrief: DebriefState;
@@ -165,8 +160,6 @@ export class TutorEngine {
     this.listener.setEnabled(this.settings.voiceCommands);
   }
 
-  // ------------------------------------------------------------------ store for React (useSyncExternalStore)
-
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -178,8 +171,6 @@ export class TutorEngine {
     this.snap = { ...this.snap, ...patch };
     for (const listener of this.listeners) listener();
   }
-
-  // ------------------------------------------------------------------ lifecycle
 
   /** Starts the pose source with its camera view in `pane` and the skeleton drawn on `overlay`. Later calls do nothing. */
   async start(pane: HTMLElement, overlay: HTMLCanvasElement): Promise<void> {
@@ -228,15 +219,12 @@ export class TutorEngine {
     this.begin(performance.now());
   }
 
-  // ------------------------------------------------------------------ commands
-
   command(command: Command): void {
     if (!this.drill) return;
     this.apply(this.drill.command(performance.now(), command));
     this.publish(true);
   }
 
-  /** A phrase from speech recognition: jev picks the command; keywords decide when it cannot. */
   private async heard(text: string): Promise<void> {
     const seq = ++this.heardSeq;
     const decision = decide(text, await this.options.platform.coach.askIntent(text));
@@ -244,8 +232,6 @@ export class TutorEngine {
     this.update({ heard: { text, ...decision, at: performance.now() } });
     if (decision.command !== undefined) this.command(decision.command);
   }
-
-  // ------------------------------------------------------------------ the loop
 
   private begin(now: number): void {
     const { drill, effects } = startRun(this.options.spec, now);
@@ -335,7 +321,6 @@ export class TutorEngine {
       view: view ?? this.drill?.view(now),
       score: score?.score,
       facing: score?.facing,
-      // The corrections the cue scheduler would say: faults too small to correct stay off the list.
       faults: [...new Set(score?.faults.flatMap((f) => ((f.score ?? 0) < SCHEDULER.minorScore ? (faultCue(f)?.text ?? []) : [])))],
     });
   }
@@ -351,8 +336,6 @@ export class TutorEngine {
     this.options.platform.speech.say(text, interrupt);
   }
 
-  // ------------------------------------------------------------------ hits: photo and coach
-
   private hit(pose: PoseId, result: Hit['result']): void {
     const hit: Hit = { mode: this.options.spec.mode, pose, result, score: this.lastScore, landmarks: this.lastLm };
     this.source.capturePhoto(PHOTO_WIDTH).then(
@@ -364,7 +347,6 @@ export class TutorEngine {
     );
   }
 
-  /** Saves the photo of a hit and queues it for the coach. */
   private keep(hit: Hit, image: string | undefined): void {
     if (!image) {
       this.update({ notice: 'Could not capture the camera frame for the photo.' });
@@ -403,7 +385,6 @@ export class TutorEngine {
       });
   }
 
-  /** At the end of a Judge's calls round: updates the personal bests in the platform store. */
   private finish(view: DrillView): void {
     this.finished = true;
     if (view.stage.kind !== 'done' || view.stage.summary.mode !== 'judge') return;
@@ -412,8 +393,6 @@ export class TutorEngine {
     store.setItem(BEST_KEY, JSON.stringify(best));
     this.update({ bests: news });
   }
-
-  // ------------------------------------------------------------------ overlay
 
   /** Draws on the overlay at the camera frame's size, so it lines up with any platform's camera view. */
   private draw(frame: PoseFrame, lm: PoseLandmarks | undefined, stage: keyof typeof STAGE_COLORS): void {

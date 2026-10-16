@@ -1,12 +1,7 @@
 // Tracking gate: npm run android:gate [-- --build | --no-build] [-- --mode=video|image] [-- --gpu=host|swiftshader]
 // [-- --save-baseline]
-// Runs the tracking gate inside the app on emulator-5564 (gate.html): the WebView renders the app's figure in every
-// pose and fault, the native plugin's detectImage finds the landmarks and the TypeScript scoring judges them. By
-// default detectImage tracks in VIDEO mode, frame to frame with the gate's lead-in, as the live app does;
-// `--mode=image` detects every frame afresh. PASS needs 0 criterion failures (so every fault cue comes first) and every
-// own-pose score within 5 points of the committed baseline, src/gate/baseline.json. `--save-baseline` replaces the
-// baseline with this run. Exits 1 on FAIL. Writes docs/gate-report.md; contact sheets, the full report and the raw
-// run go to docs/shots/gate/.
+// `--mode=video` (the default) tracks frame to frame, as the live app does; `--mode=image` detects every frame afresh.
+// `--save-baseline` replaces src/gate/baseline.json with this run. Exits 1 on FAIL.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { compare, MAX_DIFF, toBaseline, type Baseline, type Comparison } from '../../src/gate/baseline.ts';

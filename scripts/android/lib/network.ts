@@ -1,5 +1,3 @@
-// Where the app connects to, seen from the device: the remote addresses of the sockets that the app's Linux user owns,
-// read from /proc/net while a run drives the app.
 import { execFile } from 'node:child_process';
 import { lookup, reverse } from 'node:dns/promises';
 import { promisify } from 'node:util';
@@ -8,14 +6,12 @@ import { adb, APP_ID, ENV, SERIAL, sleep } from './tools.ts';
 const run = promisify(execFile);
 const TABLES = ['/proc/net/tcp', '/proc/net/tcp6', '/proc/net/udp', '/proc/net/udp6'];
 
-/** The app's Linux user id. */
 export function appUid(): number {
   const uid = /\buid:(\d+)/.exec(adb('shell', 'pm', 'list', 'packages', '-U', APP_ID))?.[1];
   if (uid === undefined) throw new Error(`${APP_ID} is not installed.`);
   return Number(uid);
 }
 
-/** An address in the form URL parsing gives it, so the same address always compares equal. */
 const canonical = (ip: string): string => (ip.includes(':') ? new URL(`http://[${ip}]`).hostname.slice(1, -1) : ip);
 
 /** A /proc/net address: 8 hex digits (IPv4) or 32 (IPv6), each 32-bit word in little-endian byte order. */
@@ -27,7 +23,6 @@ function address(hex: string): string {
   return canonical(groups.join(':'));
 }
 
-/** The remote addresses of `uid`'s sockets in /proc/net tables, without unconnected and loopback sockets. */
 function remoteAddresses(tables: string, uid: number): string[] {
   return tables.split('\n').flatMap((line) => {
     const fields = line.trim().split(/\s+/);
@@ -37,10 +32,6 @@ function remoteAddresses(tables: string, uid: number): string[] {
   });
 }
 
-/**
- * Samples the remote addresses of the app's sockets every `everyMs` until the returned stop is called, which resolves
- * with every address seen.
- */
 export function watchSockets(uid: number, everyMs = 500): () => Promise<ReadonlySet<string>> {
   const seen = new Set<string>();
   let running = true;

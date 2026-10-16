@@ -71,7 +71,6 @@ export function applyDir(m: M, p: V3): V3 {
 
 const ID: M = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0];
 
-/** World transforms per (bone, side) for a pose. Side 'L' or 'R'; midline bones use 'L'. */
 export function solvePose(pose: Pose): (bone: BoneName, side: 1 | -1) => M {
   const cache = new Map<string, M>();
   const get = (bone: BoneName, side: 1 | -1): M => {
@@ -87,7 +86,6 @@ export function solvePose(pose: Pose): (bone: BoneName, side: 1 | -1) => M {
     let local: M = ID;
     if (aa) {
       const r = s === 1 ? axisAngle(aa[0], aa[1], aa[2], aa[3]) : axisAngle(aa[0], -aa[1], -aa[2], aa[3]);
-      // translate(j) * R * translate(-j)
       local = [
         r[0], r[1], r[2], jx - (r[0] * jx + r[1] * jy + r[2] * jz),
         r[3], r[4], r[5], jy - (r[3] * jx + r[4] * jy + r[5] * jz),
@@ -101,18 +99,14 @@ export function solvePose(pose: Pose): (bone: BoneName, side: 1 | -1) => M {
   return get;
 }
 
-/** Posed world position of a bone-attached point, mirrored for side -1. */
 export function posePt(xf: (b: BoneName, s: 1 | -1) => M, pt: BPt, side: 1 | -1): V3 {
   const p: V3 = [pt.p[0] * side, pt.p[1], pt.p[2]];
   return apply(xf(pt.bone, side), p);
 }
 
 export const POSES: Record<string, Pose> = {
-  // A few degrees of abduction keep the inner arm clear of the lat, so the soft-tissue layer does not fuse them.
   relaxed: { upperarm: [0, 0, 1, 4] },
 };
-
-// ---------------------------------------------------------------- skinning rig
 
 const MID_BONES: readonly MidBone[] = ['pelvis', 'lumbar', 'chest', 'neck', 'head'];
 const LIMB_BONES: readonly LimbBone[] = ['scap', 'upperarm', 'forearm', 'hand', 'thigh', 'shin', 'foot'];
@@ -124,16 +118,14 @@ export const SKIN_BONES: readonly { key: BoneKey; bone: BoneName; side: 1 | -1 }
   ...LIMB_BONES.map((bone) => ({ key: `${bone}R` as const, bone, side: -1 as const })),
 ];
 
-/** Skin index of a bone on one side; midline bones ignore the side. */
 export function skinSlot(bone: BoneName, side: 1 | -1): number {
   const s = SIDED[bone] ? side : 1;
   return SKIN_BONES.findIndex((b) => b.bone === bone && b.side === s);
 }
 
-/** Heel and toe-tip points of the left sole (rest pose). The rig keeps the lowest one on the floor. */
 const SOLE: V3[] = [[0.134, 0, -0.075], [0.135, 0, 0.185]];
 
-/** The skeleton for the runtime rig (src/three/rig.ts); the build pose becomes its bind pose. */
+/** The skeleton for the runtime rig (src/figure/rig.ts); the build pose becomes its bind pose. */
 export function rigManifest(poseName: string): RigManifest {
   const pose = POSES[poseName] ?? {};
   const bones: FigurePose['bones'] = {};

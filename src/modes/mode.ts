@@ -75,7 +75,6 @@ export interface Mode<S> {
 
 export const say = (text: string, interrupt = false): Effect => ({ kind: 'say', text, interrupt });
 
-/** The spoken sentences of cue scheduler events, in order. */
 export function spoken(events: readonly SessionEvent[]): Effect[] {
   return events.flatMap((e) => ('say' in e ? [say(e.say.text, e.say.interrupt)] : []));
 }
@@ -85,7 +84,6 @@ export function sessionAfter(text: string, now: number): SessionState {
   return { ...startSession(now), busyUntil: now + SCHEDULER.msPerWord * text.split(' ').length };
 }
 
-/** The stage of a cue scheduler session that has not hit yet. */
 export function sessionStage(session: SessionState, now: number, goalMs: number): Stage {
   const { phase } = session;
   if (phase.kind === 'framing') return { kind: 'framing', reason: phase.reason };

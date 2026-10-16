@@ -1,8 +1,3 @@
-// The device under the tutor: the native pose plugin (./posePlugin.ts) for the camera and tracking, Android
-// TextToSpeech, the native voice plugin (./voicePlugin.ts) for voice commands, app-private files for the photos, Gemini
-// Nano on the phone for the coach and jev for the intent (./androidCoach.ts), and the KeepAwake plugin. The WebView's
-// localStorage is the store; it persists in the app's data like any app storage.
-
 import { KeepAwake as KeepAwakePlugin } from '@capacitor-community/keep-awake';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { Capacitor, CapacitorException, CapacitorHttp, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
@@ -49,7 +44,6 @@ function poseFrame(frame: NativePoseFrame): PoseFrame {
   return { landmarks: landmarks ? poseLandmarks(landmarks, width, height) : undefined, timestampMs, width, height };
 }
 
-/** The native camera and tracker. The preview is drawn behind the WebView at the pane's box and follows it. */
 function nativePoseSource(): PoseSource {
   let stopped = false;
   let frames: PluginListenerHandle | undefined;
@@ -121,7 +115,6 @@ function nativePoseSource(): PoseSource {
   };
 }
 
-/** A folder in the app's private files (Directory.Data), made on first use. */
 function dataFolder(path: string): PhotoFolder {
   let base: Promise<string> | undefined;
   let baseUri: string | undefined;
@@ -177,7 +170,6 @@ const { client: coach, setup } = deviceCoach({
   selfTestImage,
 });
 const speechLog: SpeechLogEntry[] = [];
-/** The voice input of the running drill; a disposed one ignores injected phrases. */
 let liveVoice: NativeVoiceInput | undefined;
 
 export const platform: Platform = {

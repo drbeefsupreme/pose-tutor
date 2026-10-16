@@ -1,6 +1,3 @@
-// Voice commands: what a recognized phrase means. Jev chooses among COMMAND_OPTIONS; its answer counts only at
-// MIN_CONFIDENCE or more. Otherwise, and whenever jev is unavailable, a small keyword table decides.
-
 export const COMMAND_OPTIONS = {
   next: 'Move on: the next step, the next pose or the next call.',
   repeat: 'Say the last instruction again.',
@@ -25,7 +22,6 @@ interface Decision {
   /** Undefined when nothing matched: the phrase is ignored. */
   readonly command: Command | undefined;
   readonly via: 'jev' | 'keywords';
-  /** Jev's confidence, when jev answered. */
   readonly confidence: number | undefined;
 }
 

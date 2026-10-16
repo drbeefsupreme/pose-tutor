@@ -3,14 +3,9 @@ import { POSE_SPECS } from '../pose/spec';
 import type { PoseId } from '../pose/types';
 import { say, sessionAfter, sessionStage, spoken, type Effect, type HoldResult, type Mode, type Step } from './mode';
 
-// Hold drill: the cue scheduler coaches the athlete into the pose, then the pose must be held for the goal time.
-// The score may dip below the hold line for up to `GRACE_MS`; a longer dip, or losing the athlete, restarts the hold.
-// The result is the mean score over the hold and its standard deviation (steadiness).
-
 export const HOLD_GOALS_S = [10, 20, 30] as const;
 export type HoldGoal = (typeof HOLD_GOALS_S)[number];
 
-/** How long the score may stay under the hold line before the hold restarts. */
 const GRACE_MS = 1000;
 
 interface Stats {
@@ -31,7 +26,6 @@ interface HoldState {
         /** When the score went under the hold line; undefined while it is above. */
         readonly below: number | undefined;
         readonly stats: Stats;
-        /** How many of the time calls (`marks`) were said. */
         readonly called: number;
       }
     | { readonly kind: 'done'; readonly result: HoldResult | undefined };
@@ -39,7 +33,6 @@ interface HoldState {
 
 const LOST_SAY = 'Lost it. Get back into the pose.';
 
-/** Remaining-time calls: halfway on long holds, and five seconds to go. */
 function marks(goalMs: number): { readonly atMs: number; readonly text: string }[] {
   return [
     ...(goalMs >= 20_000 ? [{ atMs: goalMs / 2, text: 'Halfway.' }] : []),

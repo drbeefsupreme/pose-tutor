@@ -4,7 +4,6 @@ import { LandmarkSmoother } from './smoothing';
 
 const FRAME_MS = 1000 / 30;
 
-/** Every landmark at (x, 0.5) with the given visibility. */
 function pose(x: number, visibility = 1): PoseLandmarks {
   return poseLandmarks(Array.from({ length: LANDMARK_COUNT }, () => ({ x, y: 0.5, visibility })), 1, 1);
 }

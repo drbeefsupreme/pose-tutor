@@ -1,10 +1,7 @@
-// What the Android harness scripts share: the repo root, the harness device, the toolchain of env.sh, and cleanup
-// that runs on success, on failure and on Ctrl-C.
 import { execFileSync, spawnSync, type ExecFileSyncOptions } from 'node:child_process';
 import { join } from 'node:path';
 
 export const ROOT = join(import.meta.dirname, '../../..');
-/** The harness emulator has its own AVD and port, so it never meets the emulators of other work. */
 export const AVD = 'pose-tutor-harness';
 export const PORT = 5564;
 export const SERIAL = `emulator-${PORT}`;
@@ -21,10 +18,8 @@ function toolchainEnv(): NodeJS.ProcessEnv {
   return { ...env, ANDROID_SERIAL: SERIAL };
 }
 
-/** process.env plus JAVA_HOME, ANDROID_HOME and PATH from scripts/android/env.sh; adb talks to the harness emulator. */
 export const ENV = toolchainEnv();
 
-/** Runs a tool from the repo root and returns its stdout. Throws with its stderr when it fails. */
 export function run(file: string, args: readonly string[], options: ExecFileSyncOptions = {}): string {
   try {
     return execFileSync(file, args, { cwd: ROOT, env: ENV, encoding: 'utf8', stdio: 'pipe', maxBuffer: 64 << 20, ...options }).toString();
@@ -34,14 +29,12 @@ export function run(file: string, args: readonly string[], options: ExecFileSync
   }
 }
 
-/** adb on the harness emulator. Some adb commands (logcat) wait for a missing device, so every call has a deadline. */
+/** Some adb commands (logcat) wait for a missing device, so every call has a deadline. */
 export const adb = (...args: string[]): string => run('adb', ['-s', SERIAL, ...args], { timeout: ADB_TIMEOUT_MS });
 
-/** adb with binary stdout, for exec-out. */
 export const adbBytes = (...args: string[]): Buffer =>
   execFileSync('adb', ['-s', SERIAL, ...args], { cwd: ROOT, env: ENV, stdio: 'pipe', maxBuffer: 64 << 20, timeout: ADB_TIMEOUT_MS });
 
-/** Runs a tool with its output on this terminal; throws when it exits non-zero. */
 export function runVisible(file: string, args: readonly string[]): void {
   const res = spawnSync(file, args, { cwd: ROOT, env: ENV, stdio: 'inherit' });
   if (res.status !== 0) throw new Error(`${file} ${args.join(' ')} exited with ${res.status ?? res.signal}`);
@@ -62,7 +55,6 @@ const groupAlive = (pid: number): boolean => {
   }
 };
 
-/** Stops the process group that `pid` leads (a detached child with its own children): SIGTERM, then SIGKILL. */
 export async function stopGroup(pid: number): Promise<void> {
   for (const signal of ['SIGTERM', 'SIGKILL'] as const) {
     if (!groupAlive(pid)) return;
@@ -71,7 +63,6 @@ export async function stopGroup(pid: number): Promise<void> {
   }
 }
 
-/** Polls `probe` until it returns a value other than undefined. */
 export async function waitFor<T>(label: string, timeoutMs: number, probe: () => T | undefined | Promise<T | undefined>, everyMs = 500): Promise<T> {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
@@ -84,10 +75,6 @@ export async function waitFor<T>(label: string, timeoutMs: number, probe: () => 
 
 type Step = () => void | Promise<void>;
 
-/**
- * Runs `body`, then its cleanup steps in reverse order, also after an error or Ctrl-C, and exits with the code `body`
- * returns (2 after an error, 130 after a signal).
- */
 export function main(body: (cleanup: (step: Step) => void) => Promise<number>): void {
   const steps: Step[] = [];
   const unwind = async (): Promise<void> => {

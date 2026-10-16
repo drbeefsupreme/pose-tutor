@@ -67,7 +67,6 @@ function PhotoCard({ photo, slot, overlay }: { photo: PhotoMeta; slot: Slot; ove
   );
 }
 
-/** Two photos of one pose: side by side or blended, with the score change. */
 export function ProgressCompare({ before, after, activeSlot, onActiveSlot }: Props) {
   const [view, setView] = useState<'side' | 'onion'>('side');
   const [overlay, setOverlay] = useState(false);

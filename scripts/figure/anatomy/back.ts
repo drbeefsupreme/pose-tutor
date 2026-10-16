@@ -6,8 +6,7 @@ const cores: CoreDef[] = [];
 const veins: VeinDef[] = [];
 const fat: FatDeposit[] = [];
 
-// Sizes in this file are final half-widths (region scale 1). Bundles that start on the spine begin
-// slightly past the midline so the left and right sheets overlap instead of leaving a notch.
+// Sizes in this file are final half-widths (region scale 1).
 
 // --- Trapezius: a kite from the occiput to T12 and out to the clavicle, acromion and scapular spine.
 // Upper fibers run down-lateral over the shoulder, middle fibers run horizontal, lower fibers run up-lateral.
@@ -122,7 +121,6 @@ muscles.push({
   ],
 });
 
-// --- Bony landmarks and deep fill.
 // Spinous processes and supraspinous ligament: the floor of the spinal groove.
 cores.push({ name: 'spine', region: 'back', k: 0.01, sep: 0.6, prims: [cone(P('pelvis', 0, 0.97, -0.098), P('chest', 0, 1.47, -0.1), 0.026, 0.024)] });
 // Deep back muscles and posterior rib angles: flatten the back of the ribcage under the lats and traps.

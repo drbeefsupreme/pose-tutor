@@ -1,7 +1,4 @@
-// Checks the TutorCoach and TutorSecrets plugins in the debug APK on the harness emulator (emulator-5564), over
-// CDP in the app page through Capacitor.Plugins: npm run android:native-check
-// Writes docs/native-report.md; logcat excerpts and the secrets prefs file go to docs/shots/native/.
-// The secret is a dummy value.
+// Checks the TutorCoach and TutorSecrets plugins on the harness emulator: npm run android:native-check
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { attachApp, bootEmulator, ensureApk, installApp, lockHarness, startApp, type AppPage } from './lib/device.ts';
@@ -13,7 +10,6 @@ mkdirSync(OUT, { recursive: true });
 const DUMMY = `dummy-not-a-key-${Date.now().toString(36)}`;
 const PREFS = 'shared_prefs/tutor_secrets.xml';
 
-/** What the page code of `run` returns: the resolved value, or the rejection's code and message. */
 interface Outcome<T> {
   readonly ok: boolean;
   readonly value?: T;
@@ -36,7 +32,6 @@ interface Check {
   readonly detail: string;
 }
 
-/** A page expression for a canvas image of the given size as a data URL. */
 const imageJs = (width: number, height: number, type: 'image/jpeg' | 'image/png'): string => `(() => {
   const c = document.createElement('canvas');
   c.width = ${width}; c.height = ${height};
@@ -66,7 +61,6 @@ main(async (cleanup) => {
 
   let app: AppPage = await startApp();
   const pids = [adb('shell', 'pidof', APP_ID).trim()];
-  /** Calls a plugin method in the page; `T` is the method's result type in the contract. The page code never rejects. */
   const run = async <T = unknown>(plugin: string, method: string, argsJs = '{}'): Promise<Outcome<T>> =>
     (await app.cdp.evaluate(`(async () => {
       try { return { ok: true, value: (await window.Capacitor.Plugins.${plugin}.${method}(${argsJs})) ?? null }; }

@@ -18,7 +18,6 @@ const BOTTOM = 34;
 const GRID = [0, 25, 50, 75, 100];
 const DAY_MS = 86_400_000;
 
-/** Score over time for one pose; a click on a point picks that photo. */
 export function TrendChart({ photos, before, after, onPick }: Props) {
   const times = photos.map((p) => Date.parse(p.takenAt));
   const t0 = times[0];

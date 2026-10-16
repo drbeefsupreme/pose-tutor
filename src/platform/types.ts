@@ -32,7 +32,7 @@ export type PoseSourceStart =
  */
 export interface PoseSource {
   start(pane: HTMLElement, onFrame: (frame: PoseFrame) => void): Promise<PoseSourceStart>;
-  /** Makes the next frames come from a fresh detection (a call changed the expected facing). */
+  /** Makes the next frames come from a fresh detection. */
   reset(): void;
   /** The current camera frame as a JPEG data URL, at most `maxWidth` pixels wide, unmirrored. */
   capturePhoto(maxWidth: number): Promise<string | undefined>;
@@ -74,13 +74,11 @@ export interface CoachAsk {
   readonly imageDataUrl: string;
 }
 
-/** The Gemini Nano status and whether a TypeSafe key is stored, for Settings and the home screen. */
 export interface Health {
   readonly coach: NanoStatusResult;
   readonly keyStored: boolean;
 }
 
-/** The coach model and the voice-command intent: Gemini Nano and jev, both called from the phone. */
 export interface CoachClient {
   health(): Promise<Health>;
   askCoach(ask: CoachAsk): Promise<CoachNote>;

@@ -4,7 +4,6 @@ import type { PoseId } from '../pose/types';
 import { POSE_LABELS } from '../progress/format';
 import { poseThumbnails, type Thumbnails } from './thumbnails';
 
-/** The 12 NPC poses as figure thumbnails, in prejudging order. */
 export function PosePicker({ pose, onPose }: { pose: PoseId; onPose: (pose: PoseId) => void }) {
   const [thumbs, setThumbs] = useState<Thumbnails | undefined>();
 

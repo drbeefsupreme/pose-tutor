@@ -22,8 +22,6 @@ export type BodySide = 'left' | 'right';
 /** Which way the athlete faces the camera. Side views name the athlete's side nearest the camera. */
 export type Facing = 'front' | 'back' | 'leftSide' | 'rightSide';
 
-// ---------------------------------------------------------------- figure pose (3D model)
-
 export type MidBone = 'pelvis' | 'lumbar' | 'chest' | 'neck' | 'head';
 export type LimbBone = 'scap' | 'upperarm' | 'forearm' | 'hand' | 'thigh' | 'shin' | 'foot';
 /** Limb bones carry an explicit side: no mirroring, so asymmetric poses are representable. */
@@ -37,8 +35,6 @@ export interface FigurePose {
   yaw: number;
   bones: Partial<Record<BoneKey, readonly AxisAngle[]>>;
 }
-
-// ---------------------------------------------------------------- scoring spec (camera)
 
 /** 2D image-plane metrics measured from pose landmarks. Definitions: docs/pose-spec.md. */
 export type MetricId =
@@ -100,8 +96,6 @@ export interface PoseSpec {
   /** Short official description with its source tag. */
   description: string;
 }
-
-// ---------------------------------------------------------------- measurement and result
 
 /** One measured metric value; absent when the landmarks it needs were not visible enough. */
 export type Metrics = Partial<Record<`${MetricId}` | `${MetricId}.${BodySide}`, number>>;

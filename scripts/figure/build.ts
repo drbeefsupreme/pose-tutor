@@ -1,4 +1,3 @@
-// Builds the figure mesh with the tutor's one look baked in, and its skin weights, from the procedural field.
 // Usage: bun scripts/figure/build.ts [--h 0.005] [--pose relaxed] [--out public/figure] [--workers N]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { cpus } from 'node:os';
@@ -18,8 +17,7 @@ const BLOCK = 8;
 
 /**
  * The tutor's look: the base surface moved a fixed fraction of the way to each of these states' surfaces, along the
- * vertex normals. The weights are the morph influences the earlier app used for its default appearance, so the baked
- * mesh matches what it rendered.
+ * vertex normals.
  */
 const LOOK: { name: string; state: Partial<FieldState>; weight: number }[] = [
   { name: 'fat', state: { fat: 1 }, weight: 0.35 },
@@ -28,7 +26,6 @@ const LOOK: { name: string; state: Partial<FieldState>; weight: number }[] = [
   { name: 'vein', state: { vein: 1 }, weight: 0.07860701304591086 },
 ];
 
-// ---------------- worker pool ----------------
 const NW = Math.max(2, Math.min(28, Number(args.get('workers') ?? cpus().length - 2)));
 const workers = Array.from({ length: NW }, () => new Worker(new URL('./worker.ts', import.meta.url).href));
 let jobId = 0;
@@ -46,11 +43,10 @@ function run(job: Job, transfer: ArrayBuffer[] = []): Promise<JobResult> {
 const t0 = performance.now();
 const log = (...m: unknown[]) => console.log(`[${((performance.now() - t0) / 1000).toFixed(1)}s]`, ...m);
 
-// ---------------- 1. sample the base field on a narrow band ----------------
 const base = new Field(ANATOMY, BASE_STATE, POSE);
 const bb = base.bounds();
 const origin: V3 = [bb.min[0] - 0.02, bb.min[1] - 0.02, bb.min[2] - 0.02];
-const dims = [0, 1, 2].map((k) => Math.ceil((bb.max[k] - bb.min[k] + 0.04) / (H * BLOCK))) as V3; // blocks per axis
+const dims = [0, 1, 2].map((k) => Math.ceil((bb.max[k] - bb.min[k] + 0.04) / (H * BLOCK))) as V3;
 const NX = dims[0] * BLOCK + 1, NY = dims[1] * BLOCK + 1, NZ = dims[2] * BLOCK + 1;
 log(`grid ${NX}x${NY}x${NZ} h=${H}  workers=${NW}`);
 
@@ -71,7 +67,6 @@ for (let k = 0; k < dims[2]; k++) for (let j = 0; j < dims[1]; j++) for (let i =
   }
   if (mn < thresh || (pos && neg)) marked[bidx(i, j, k)] = 1;
 }
-// dilate by one block
 const dil = marked.slice();
 for (let k = 0; k < dims[2]; k++) for (let j = 0; j < dims[1]; j++) for (let i = 0; i < dims[0]; i++) {
   if (!marked[bidx(i, j, k)]) continue;
@@ -106,7 +101,6 @@ const vals = new Float32Array(NX * NY * NZ).fill(1);
 }
 log('sampled');
 
-// ---------------- 2. surface nets ----------------
 const cellVert = new Int32Array(NX * NY * NZ).fill(-1);
 const vpos: number[] = [];
 const inBand = (i: number, j: number, k: number) => {
@@ -142,7 +136,6 @@ const tris: number[] = [];
 const cv = (i: number, j: number, k: number) => (i < 0 || j < 0 || k < 0 ? -1 : cellVert[i + NX * (j + NY * k)]);
 const quad = (a: number, b: number, c: number, d: number, flip: boolean) => {
   if (a < 0 || b < 0 || c < 0 || d < 0) return;
-  // split along the shorter diagonal
   const d02 = (vpos[a * 3] - vpos[c * 3]) ** 2 + (vpos[a * 3 + 1] - vpos[c * 3 + 1]) ** 2 + (vpos[a * 3 + 2] - vpos[c * 3 + 2]) ** 2;
   const d13 = (vpos[b * 3] - vpos[d * 3]) ** 2 + (vpos[b * 3 + 1] - vpos[d * 3 + 1]) ** 2 + (vpos[b * 3 + 2] - vpos[d * 3 + 2]) ** 2;
   const t = d02 < d13 ? [a, b, c, a, c, d] : [a, b, d, b, c, d];
@@ -154,18 +147,14 @@ for (let b = 0; b < nBlocks; b++) {
   for (let k = bz; k < bz + BLOCK; k++) for (let j = by; j < by + BLOCK; j++) for (let i = bx; i < bx + BLOCK; i++) {
     const v0 = vals[i + NX * (j + NY * k)];
     const in0 = v0 < 0;
-    // +x edge
     if (i + 1 < NX && (vals[i + 1 + NX * (j + NY * k)] < 0) !== in0 && inBand(i, j - 1, k - 1))
       quad(cv(i, j - 1, k - 1), cv(i, j, k - 1), cv(i, j, k), cv(i, j - 1, k), !in0);
-    // +y edge
     if (j + 1 < NY && (vals[i + NX * (j + 1 + NY * k)] < 0) !== in0 && inBand(i - 1, j, k - 1))
       quad(cv(i - 1, j, k - 1), cv(i - 1, j, k), cv(i, j, k), cv(i, j, k - 1), !in0);
-    // +z edge
     if (k + 1 < NZ && (vals[i + NX * (j + NY * (k + 1))] < 0) !== in0 && inBand(i - 1, j - 1, k))
       quad(cv(i - 1, j - 1, k), cv(i, j - 1, k), cv(i, j, k), cv(i - 1, j, k), !in0);
   }
 }
-// Keep only the outer skin: the largest connected component (drops internal pockets).
 const { pos: keptPos, index: keptIndex } = (() => {
   const nv0 = vpos.length / 3;
   const parent = new Int32Array(nv0).map((_, i) => i);
@@ -190,7 +179,6 @@ const index = keptIndex;
 const NV = pos.length / 3;
 log(`surface nets: ${vpos.length / 3} verts -> outer skin ${NV} verts, ${index.length / 3} tris`);
 
-// ---------------- 3. smooth + project onto the surface ----------------
 function laplacian(p: Float32Array, lambda: number): Float32Array {
   const acc = new Float32Array(p.length), cnt = new Uint16Array(NV);
   for (let t = 0; t < index.length; t += 3) {
@@ -231,13 +219,11 @@ let nrm: Float32Array;
 }
 log('refined base surface');
 
-// ---------------- 4. veins: project authored paths onto the base skin ----------------
 const xf = solvePose(POSES[POSE] ?? {});
 const veinPaths: VeinPath[] = [];
 for (const v of ANATOMY.veins) {
   for (const side of [1, -1] as const) {
     const ctrl = v.pts.map((q) => posePt(xf, q, side));
-    // Catmull-Rom resample every ~4 mm
     const pts: V3[] = [], rs: number[] = [];
     const total = ctrl.slice(1).reduce((s, q, i) => s + Math.hypot(q[0] - ctrl[i][0], q[1] - ctrl[i][1], q[2] - ctrl[i][2]), 0);
     const nS = Math.max(4, Math.ceil(total / 0.004));
@@ -265,8 +251,6 @@ for (const v of ANATOMY.veins) {
 }
 log(`veins: ${veinPaths.length} paths`);
 
-// ---------------- 5. bake the look ----------------
-// Vertex adjacency (CSR) for smoothing scalar offsets.
 const adjStart = new Int32Array(NV + 1);
 const adjList = (() => {
   const deg = new Int32Array(NV);
@@ -297,7 +281,6 @@ function meshNormals(p: Float32Array): Float32Array {
   return n;
 }
 
-/** Offsets along the base normal; failed or outlier vertices take their neighbors' average. */
 function cleanOffsets(s: Float32Array, fail: Uint8Array, smoothMix = 0.4): Float32Array {
   let cur = s.slice();
   const bad = fail.slice();
@@ -314,7 +297,6 @@ function cleanOffsets(s: Float32Array, fail: Uint8Array, smoothMix = 0.4): Float
     cur = next;
     if (it >= 6 && (remaining === 0 || changed === 0)) break;
   }
-  // light smoothing to remove sampling noise
   const out = cur.slice();
   for (let v = 0; v < NV; v++) {
     let sum = 0, cnt = 0;
@@ -352,8 +334,6 @@ const lookP = baseProj.p.slice(), lookN = baseN.slice(), lookAo = baseProj.ao.sl
 for (const t of LOOK) {
   const state = { ...BASE_STATE, ...t.state };
   const r = await project(state, t.name === 'vein' ? veinPaths : undefined);
-  // Fat fills creases; vertices on crease walls bunch up and fold. Relax them tangentially (Taubin) and
-  // re-project onto the target surface; vertex identity is kept.
   if (t.name === 'fat') {
     for (let s = 0; s < 3; s++) {
       const relaxed = laplacian(laplacian(r.p, 0.5), -0.53);
@@ -373,7 +353,6 @@ for (let v = 0; v < NV * 3; v += 3) {
   lookN[v] /= l; lookN[v + 1] /= l; lookN[v + 2] /= l;
 }
 
-// ---------------- 6. skin weights and trunks, on the base surface ----------------
 const skin = bakeSkinWeights(base, baseProj.p, adjStart, adjList, H);
 log(`skin weights (${skin.filled} vertices without a nearby part took their neighbors' weights)`);
 const trunks = new Float32Array(NV);
@@ -388,7 +367,6 @@ for (let v = 0; v < NV; v++) {
   trunks[v] = d;
 }
 
-// ---------------- 7. write ----------------
 mkdirSync(OUT, { recursive: true });
 const q16 = (a: Float32Array, scale: number) => { const o = new Int16Array(a.length); for (let i = 0; i < a.length; i++) o[i] = Math.round(Math.max(-1, Math.min(1, a[i] / scale)) * 32767); return o; };
 const aoBytes = new Uint8Array(NV);

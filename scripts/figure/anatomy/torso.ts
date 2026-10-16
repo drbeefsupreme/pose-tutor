@@ -133,7 +133,6 @@ muscles.push({
   rows.forEach(([y0, y1, xm, xl0, xl1], i) => {
     const lower = i === 3;
     const ya = y0 - 0.005, yb = y1 + (lower ? 0 : 0.005), ym = (ya + yb) / 2;
-    // A buried bundle shows its top from 0.85 half-widths on either side of its center line.
     const bundle = (xa: number, xb: number, wa: number, wb: number, tilt: number, dr: number, out: number): Bundle => {
       const xc = (xa + xb) / 2, n = ringN(ym, degAt(xc, ym));
       return B([front(xa, ya, out), front(xc, ym, out), front(xb, yb, out)], wa * 0.9, (wa + wb) / 2, wb * (lower ? 0.75 : 0.9),
@@ -144,7 +143,6 @@ muscles.push({
       const wa = (xl0 - xm) / 1.7, wb = (xl1 - xm) / 1.7;
       bundles = [bundle(xm + 0.85 * wa, xm + 0.85 * wb, wa, wb, 0.8, 0.55, -0.011)];
     } else {
-      // Two overlapping bundles span 2.4 half-widths.
       const wa = (xl0 - xm) / 2.4, wb = (xl1 - xm) / 2.4;
       bundles = [bundle(xm + 0.85 * wa, xm + 0.85 * wb, wa, wb, 0.5, 0.85, -0.011), bundle(xl0 - 0.85 * wa, xl1 - 0.85 * wb, wa, wb, 1, 0.85, -0.013)];
     }
@@ -170,15 +168,10 @@ cores.push({
     ell(P('head', 0, 1.566, 0.03), [0.044, 0.02, 0.04]), ell(P('head', 0, 1.618, -0.045), [0.05, 0.028, 0.045])],
 });
 
-// --- Head: calm, statue-like adult male head about 23 cm tall (vertex 1.785, chin 1.552). Smooth,
-// broad cranium (buzz cut implied), soft brow, eye sockets with neutral eyes, straight nose, closed
-// lips, square jaw, simple ears. One core holds both sides, so the eye sockets carve both halves.
+// --- Head: a simplified mannequin head (like an artist's anatomical figure), with no eyes or lips.
 {
   const h = (x: number, y: number, z: number) => P('head', x, y, z);
   const pair = (f: (s: number) => CorePrim) => [f(1), f(-1)];
-  // Deliberately simplified mannequin head (like an artist's anatomical figure): smooth facial
-  // planes, a soft brow and nose, no eyes or lips. The body is the subject of this tool.
-  // Proportions: vertex 1.785, chin 1.550. Width about 15.5 cm, depth about 20 cm.
   cores.push({
     name: 'head', region: 'head', k: 0.016, sep: 0,
     prims: [
@@ -194,7 +187,7 @@ cores.push({
     ],
   });
 }
-// Supraclavicular fill: fat and scalenes between SCM, trapezius and clavicle (avoids deep pockets).
+// Supraclavicular fill: fat and scalenes between SCM, trapezius and clavicle.
 cores.push({ name: 'supraclavicular', region: 'neck', k: 0.02, sep: 0, prims: [ell(P('neck', 0.088, 1.492, 0.025), [0.048, 0.022, 0.034], [0, 0, -12])] });
 // Bony landmarks that show under the skin.
 cores.push({
@@ -209,11 +202,9 @@ cores.push({
   prims: [cone(P('pelvis', 0.122, 1.0, 0.072), P('pelvis', 0.15, 1.04, 0.02), 0.01, 0.012), cone(P('pelvis', 0.15, 1.04, 0.02), P('pelvis', 0.13, 1.05, -0.06), 0.012, 0.012),
     cone(P('pelvis', 0.13, 1.05, -0.06), P('pelvis', 0.07, 1.03, -0.1), 0.012, 0.01)],
 });
-// Lower abdominal wall and pelvic rim between the ASIS and the rectus: fills the front of the pelvis,
-// which is flatter and wider than the loft ellipse, so the ASIS and the oblique pad do not float.
+// Lower abdominal wall and pelvic rim between the ASIS and the rectus.
 cores.push({ name: 'lowerAbdomen', region: 'core', k: 0.02, sep: 0, prims: [ell(P('pelvis', 0.07, 1.0, 0.022), [0.075, 0.07, 0.062])] });
-// Linea alba: the tendinous midline between the rectus columns. It lifts the floor of the groove so
-// the line reads as a soft valley (cut by `sep`) instead of a sharp V that folds under the soft-tissue layer.
+// Linea alba: the tendinous midline between the rectus columns.
 cores.push({ name: 'lineaAlba', region: 'abs', k: 0.02, sep: 0, prims: [cone(P('chest', 0, 1.255, 0.083), P('pelvis', 0, 0.95, 0.086), 0.012, 0.01)] });
 cores.push({ name: 'groin', region: 'core', k: 0.02, sep: 0, prims: [ell(P('pelvis', 0, 0.86, 0.085), [0.04, 0.045, 0.03])] });
 veins.push(

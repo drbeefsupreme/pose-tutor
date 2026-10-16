@@ -1,11 +1,8 @@
-// Shared authoring helpers for the procedural anatomy. Coordinates: rest-pose meters, +Y up,
-// figure faces +Z, +X is the figure's LEFT side. Author the left side; the field mirrors it.
 import type { BPt, BoneName, Bundle, CoreDef, CorePrim, FatDeposit, MuscleDef, Region, V3, VeinDef } from '../types';
 import { JOINTS } from '../skeleton';
 
 const P = (bone: BoneName, x: number, y: number, z: number): BPt => ({ bone, p: [x, y, z] });
 
-// ---------- limb frames ----------
 interface Frame { a: V3; e: V3; L: number; f: V3; lat: V3 }
 
 function frame(a: V3, b: V3, front: V3): Frame {
@@ -35,7 +32,6 @@ function limb(fr: Frame, bone: BoneName, f: number, lat: number, ant: number): B
 }
 const arm = (f: number, lat: number, ant: number) => limb(ARM, 'upperarm', f, lat, ant);
 const fore = (f: number, lat: number, ant: number) => limb(FORE, 'forearm', f, lat, ant);
-/** Direction in the arm frame. */
 const armDir = (lat: number, ant: number, along = 0): V3 => [
   ARM.lat[0] * lat + ARM.f[0] * ant + ARM.e[0] * along,
   ARM.lat[1] * lat + ARM.f[1] * ant + ARM.e[1] * along,
@@ -56,7 +52,6 @@ export { P, B, ell, cone, arm, fore, armDir, foreDir, limb, S, E, W, ARM, FORE }
 
 interface RegionModule { muscles: MuscleDef[]; cores: CoreDef[]; veins: VeinDef[]; fat: FatDeposit[] }
 
-/** Scales muscle belly cross-sections per region (centerlines unchanged) and returns the module. */
 export function regionModule(m: RegionModule, scale: Partial<Record<Region, number>>): RegionModule {
   for (const mu of m.muscles) {
     const s = scale[mu.region] ?? 1;

@@ -15,10 +15,6 @@ private val DATA_URL_HEADER = Regex("^data:image/(jpeg|jpg|png);base64,", RegexO
 
 internal class BadImageException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
-/**
- * Decodes a JPEG or PNG data URL to an ARGB bitmap with a short side of at most [NANO_IMAGE_SHORT_SIDE]. The app's
- * photos come from a canvas, so they have no EXIF orientation: the pixels are already upright and stay as decoded.
- */
 internal fun decodeCoachImage(dataUrl: String): Bitmap {
     val header = DATA_URL_HEADER.find(dataUrl) ?: throw BadImageException("imageDataUrl must be a JPEG or PNG data URL")
     val bytes = try {

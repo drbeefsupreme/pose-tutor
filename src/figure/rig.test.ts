@@ -72,7 +72,6 @@ describe('Rig', () => {
     const squat = rig.compile({ yaw: 0, bones: { ...flat, thighR: flat.thighL, shinR: flat.shinL, footR: flat.footL } });
     const soles = manifest.contacts.map((c) => rig.locate(squat, manifest.bones[c.bone], c.p)[1]);
     expect(Math.round(Math.min(...soles) * 1e9) / 1e9).toBe(0);
-    // flat feet on the floor: the ankles keep their rest height and the pelvis comes down
     expect(rig.locate(squat, 'footL')[1]).toBeCloseTo(0.085, 9);
     expect(rig.locate(squat, 'pelvis')[1]).toBeLessThan(0.88);
   });

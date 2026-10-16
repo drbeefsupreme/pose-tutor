@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Installs the debug APK that matches the device's ABI and opens the app. ANDROID_SERIAL picks the device.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/android/env.sh

@@ -3,9 +3,8 @@ import { MIN_VISIBILITY } from '../pose/metrics';
 import type { AxisAngle, BodySide, FigurePose } from '../pose/types';
 import type { Mode } from './mode';
 
-// Mirror: the figure copies the athlete live, as a mirror image (the athlete's right arm moves the figure's left
-// arm, on the same side of the screen as in the mirrored webcam). A 2D retarget from the front view: each limb
-// segment's angle in the image plane becomes a rotation in the figure's frontal plane. Nothing is scored.
+// The figure copies the athlete as a mirror image: the athlete's right arm moves the figure's left arm, on the same
+// side of the screen as in the mirrored camera preview.
 
 type Segment = 'upperarm' | 'forearm' | 'thigh' | 'shin';
 type FigureSide = 'L' | 'R';
@@ -35,7 +34,6 @@ const SEGMENTS: { readonly [S in Segment]: { readonly from: Joint; readonly to: 
 
 const DEG = 180 / Math.PI;
 
-/** The rest skeleton's segment angles: the upper arm hangs 25.7° out from vertical. */
 export const REST_ANGLES: { readonly [S in Segment]: number } = Object.fromEntries(
   (Object.keys(SEGMENTS) as Segment[]).map((s) => {
     const a = REST_JOINTS[SEGMENTS[s].from];
@@ -51,16 +49,11 @@ export const REST_LIMBS: LimbAngles = Object.fromEntries(
   ]),
 ) as LimbAngles;
 
-/** The athlete's side that drives each figure side, and which image direction points away from the midline. */
 const DRIVER: { readonly [F in FigureSide]: { readonly side: BodySide; readonly outward: 1 | -1 } } = {
   L: { side: 'right', outward: -1 },
   R: { side: 'left', outward: 1 },
 };
 
-/**
- * The visible segment angles of a front-view athlete, keyed by the figure segment they drive. A segment needs both
- * of its joints visible. Image x is scaled by the aspect ratio so the angles are not distorted.
- */
 export function readLimbs(lm: PoseLandmarks): Partial<Record<SegmentKey, number>> {
   const out: Partial<Record<SegmentKey, number>> = {};
   for (const fig of ['L', 'R'] as const) {
@@ -90,7 +83,6 @@ export function mirrorFigure(angles: LimbAngles): FigurePose {
       const { parent } = SEGMENTS[seg];
       const own = angles[`${seg}${fig}`] - REST_ANGLES[seg];
       const turn = parent === undefined ? own : own - (angles[`${parent}${fig}`] - REST_ANGLES[parent]);
-      // The same rotation in -180..180, so a forearm crossing straight up does not spin the long way round.
       const deg = turn - 360 * Math.round(turn / 360);
       const rotation: AxisAngle = [0, 0, axisZ, deg];
       bones[`${seg}${fig}`] = [rotation];

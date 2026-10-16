@@ -16,16 +16,12 @@ import java.util.EnumMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/**
- * The landmarkers of `detectImage`, on their own thread, built on first use and dropped by [release]: IMAGE mode for
- * single images, and VIDEO mode, which tracks from call to call like live tracking, for calls with a timestamp.
- */
+/** MediaPipe VIDEO mode tracks from call to call like live tracking, so calls with a timestamp use it. */
 internal class StillDetector(private val context: Context, private val policy: DelegatePolicy) {
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
     private val landmarkers = EnumMap<RunningMode, Pair<PoseLandmarker, Delegate>>(RunningMode::class.java)
     private var lastTimestampMs = Long.MIN_VALUE
 
-    /** Calls [done] on the detector thread with `{ frame, delegate }`, or with the failure. */
     fun detect(dataUrl: String, timestampMs: Long?, done: (Result<JSObject>) -> Unit) {
         executor.execute {
             done(
@@ -68,13 +64,11 @@ internal class StillDetector(private val context: Context, private val policy: D
         return requireNotNull(BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)) { "the image cannot be decoded" }
     }
 
-    /** Ends the VIDEO-mode track: the next call with a timestamp starts a new one, at any timestamp. */
     fun resetTrack() = executor.execute {
         landmarkers.remove(RunningMode.VIDEO)?.first?.closeSafely()
         lastTimestampMs = Long.MIN_VALUE
     }
 
-    /** Frees the landmarkers; the next [detect] builds a new one. */
     fun release() = executor.execute {
         landmarkers.values.forEach { it.first.closeSafely() }
         landmarkers.clear()

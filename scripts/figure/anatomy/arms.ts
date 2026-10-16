@@ -43,7 +43,6 @@ const handEll = (a: number, l: number, n: number, r: V3) => ell(hp(a, l, n), r, 
   });
 }
 
-// --- Upper arm
 // Biceps: long head on the outer front, short head on the inner front; one belly with a groove
 // between the heads (detail), peaking at about 60 % of the humerus, tendon into the elbow pit.
 muscles.push({
@@ -80,11 +79,9 @@ muscles.push({
 });
 
 // --- Forearm (neutral rotation: dorsal side faces out, thumb side faces forward).
-// Bellies sit half inside the forearm envelope so each one shows as a broad ridge, not a tube.
 // Around the bone at the widest level (~20 %): brachioradialis (front-out), ECRL, ECRB, extensor
 // digitorum, ECU (back), the subcutaneous ulna (ulnar furrow), FCU, FDS/palmaris (inner), FCR,
-// pronator teres (front-in). Bellies turn to tendon in the lower half; their ends dip into the
-// envelope, which shapes the tendinous lower forearm and wrist.
+// pronator teres (front-in). Bellies turn to tendon in the lower half.
 // Lateral (radial) group from the supracondylar ridge: brachioradialis and ECRL.
 muscles.push({
   name: 'brachioradialis', region: 'forearms', sep: 0.85, intra: 0, k: 0.014,
@@ -127,7 +124,6 @@ muscles.push({
   ],
 });
 
-// --- Bony landmarks
 cores.push({
   name: 'elbow', region: 'arms', k: 0.016, sep: 0.4,
   prims: [
@@ -137,8 +133,7 @@ cores.push({
     armEll(0.99, 0.034, -0.012, [0.009, 0.011, 0.009]), // lateral epicondyle
   ],
 });
-// Flat common tendon of the triceps on the lower back of the arm (inside the horseshoe): the cap
-// of an ellipsoid mostly buried in the arm, so its edges meet the arm tangentially.
+// Flat common tendon of the triceps on the lower back of the arm (inside the horseshoe).
 cores.push({
   name: 'tricepsTendon', region: 'arms', k: 0.012, sep: 0.5,
   prims: [armEll(0.8, 0.003, -0.02, [0.034, 0.09, 0.028])],
@@ -152,7 +147,6 @@ cores.push({
 });
 
 // --- Hand: relaxed loose fist, palm toward the thigh, thumb resting on the index finger.
-// Each digit is its own core, so a faint line separates neighbouring fingers.
 {
   const palm: CorePrim[] = [
     handEll(0.016, -0.002, -0.002, [0.0145, 0.02, 0.027]), // carpus
@@ -160,7 +154,7 @@ cores.push({
     handEll(0.045, -0.013, 0.024, [0.014, 0.026, 0.015]), // thenar eminence
     handEll(0.056, -0.009, 0.031, [0.011, 0.02, 0.011]), // first web space (adductor, first dorsal interosseous)
     handEll(0.055, -0.011, -0.03, [0.012, 0.03, 0.012]), // hypothenar eminence
-    handEll(0.086, -0.03, 0.006, [0.013, 0.02, 0.03]), // inside of the curled fingers (no open pocket)
+    handEll(0.086, -0.03, 0.006, [0.013, 0.02, 0.03]), // inside of the curled fingers
   ];
   // [MCP a, MCP n, segment lengths, radii at MCP/PIP/DIP/tip, sideways drift per segment]
   const fingers: [number, number, V3, number[], number][] = [
@@ -193,7 +187,6 @@ cores.push({
   cores.push({ name: 'hand', region: 'hands', k: 0.012, sep: 0.15, prims: palm });
 }
 
-// --- Deep fill under the muscles so borders read as grooves, not gaps.
 cores.push({
   name: 'armEnvelope', region: 'core', k: 0.02, sep: 0,
   prims: [
@@ -213,7 +206,7 @@ cores.push({
   ],
 });
 
-// --- Superficial veins (research/detail-vascularity.md, appendix B). Paths are projected onto the skin.
+// Superficial veins. Paths are projected onto the skin.
 veins.push(
   // Dorsal venous network of the hand: arch across the back of the metacarpals, fed by the knuckle gaps.
   { name: 'dorsalArch', region: 'hands', r: 0.0017, pts: [hp(0.075, 0.014, 0.03), hp(0.058, 0.017, 0.012), hp(0.062, 0.017, -0.01), hp(0.045, 0.015, -0.03)] },

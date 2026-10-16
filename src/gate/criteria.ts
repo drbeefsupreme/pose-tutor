@@ -5,9 +5,6 @@ import { SCHEDULER } from '../pose/session';
 import { POSE_SPECS } from '../pose/spec';
 import type { Facing, PoseId } from '../pose/types';
 
-// The tracking gate: renders of the figure go through the real tracking pipeline, and these rules decide whether the
-// figure and the scoring spec agree.
-
 /** An own-pose score at least this high is a hit, as in the live session. */
 export const HIT_SCORE = SCHEDULER.hitScore;
 /** A clearly different pose must score below this. */

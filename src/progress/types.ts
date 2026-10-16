@@ -1,4 +1,3 @@
-// The progress photo records that the photo store keeps and the tutor saves.
 import type { PoseLandmarks } from '../pose/landmarks';
 import type { MetricId, MetricSide, PoseId } from '../pose/types';
 
@@ -7,7 +6,6 @@ export type PhotoId = string & { readonly __brand: 'PhotoId' };
 
 export type PhotoImageType = 'jpeg' | 'webp';
 
-/** A correction that the tutor gave when the photo was taken. */
 export interface PhotoFault {
   metric: MetricId;
   side?: MetricSide;
@@ -23,12 +21,10 @@ export interface PhotoMeta {
   score: number;
   faults: PhotoFault[];
   landmarks?: PoseLandmarks;
-  /** Practice mode that took the photo. */
   mode?: string;
   image: PhotoImageType;
 }
 
-/** What the tutor hands to `PhotoStore.save`. */
 export interface SavePhotoRequest {
   pose: PoseId;
   /** `data:image/jpeg;base64,...` or `data:image/webp;base64,...` */

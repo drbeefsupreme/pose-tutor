@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Builds the Android app: the web part (vite.config.ts, with public/figure), Capacitor sync, then one debug APK per ABI
-# in android/app/build/outputs/apk/debug/.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/android/env.sh
