@@ -16,12 +16,6 @@ export type Region =
   | 'abs' | 'obliques' | 'serratus' | 'back' | 'lowerback' | 'glutes'
   | 'quads' | 'hamstrings' | 'adductors' | 'calves' | 'shins' | 'hands' | 'feet' | 'core';
 
-export const REGIONS: Region[] = [
-  'core', 'head', 'neck', 'traps', 'shoulders', 'chest', 'arms', 'forearms',
-  'abs', 'obliques', 'serratus', 'back', 'lowerback', 'glutes',
-  'quads', 'hamstrings', 'adductors', 'calves', 'shins', 'hands', 'feet',
-];
-
 export interface Bundle {
   /** Polyline from origin to insertion (>= 2 points). */
   pts: BPt[];

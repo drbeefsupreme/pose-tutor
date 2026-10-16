@@ -237,15 +237,13 @@ export class TutorEngine {
     this.publish(true);
   }
 
-  /** A phrase from speech recognition (or the test hook): jev picks the command; keywords decide when it cannot. */
-  async heard(text: string): Promise<Heard> {
+  /** A phrase from speech recognition: jev picks the command; keywords decide when it cannot. */
+  private async heard(text: string): Promise<void> {
     const seq = ++this.heardSeq;
     const decision = decide(text, await this.options.platform.coach.askIntent(text));
-    const heard: Heard = { text, ...decision, at: performance.now() };
-    if (this.disposed || seq !== this.heardSeq) return heard;
-    this.update({ heard });
+    if (this.disposed || seq !== this.heardSeq) return;
+    this.update({ heard: { text, ...decision, at: performance.now() } });
     if (decision.command !== undefined) this.command(decision.command);
-    return heard;
   }
 
   // ------------------------------------------------------------------ the loop

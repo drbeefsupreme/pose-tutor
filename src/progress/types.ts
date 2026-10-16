@@ -25,7 +25,6 @@ export interface PhotoMeta {
   landmarks?: PoseLandmarks;
   /** Practice mode that took the photo. */
   mode?: string;
-  note?: string;
   image: PhotoImageType;
 }
 
@@ -38,5 +37,4 @@ export interface SavePhotoRequest {
   faults: PhotoFault[];
   landmarks?: PoseLandmarks;
   mode?: string;
-  note?: string;
 }

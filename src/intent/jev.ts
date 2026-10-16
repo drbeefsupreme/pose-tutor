@@ -12,7 +12,6 @@ const INSTRUCTIONS =
 export interface IntentAnswer {
   readonly choice: string;
   readonly confidence: number;
-  readonly probabilities: Readonly<Record<string, number>>;
 }
 
 export interface JsonReply {
@@ -47,7 +46,7 @@ export async function chooseIntent(post: PostJson, key: string, heard: string, o
 }
 
 interface JevResponse {
-  answers?: Record<string, { choice?: unknown; confidence?: unknown; probabilities?: Record<string, unknown> | null } | null>;
+  answers?: Record<string, { choice?: unknown; confidence?: unknown; probabilities?: unknown } | null>;
 }
 
 /** Reads the Choice answer out of a jev response body, or null if the body does not have the expected shape. */
@@ -58,10 +57,5 @@ export function parseChoiceAnswer(body: unknown, options: readonly string[]): In
   const probabilities = answer?.probabilities;
   if (typeof choice !== 'string' || !options.includes(choice)) return null;
   if (typeof confidence !== 'number' || typeof probabilities !== 'object' || probabilities === null) return null;
-  const probs: Record<string, number> = {};
-  for (const option of options) {
-    const p = probabilities[option];
-    probs[option] = typeof p === 'number' ? p : 0;
-  }
-  return { choice, confidence, probabilities: probs };
+  return { choice, confidence };
 }

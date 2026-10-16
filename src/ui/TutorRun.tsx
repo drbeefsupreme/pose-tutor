@@ -6,14 +6,12 @@ import { usePlatform } from '../platform/context';
 import type { Speech } from '../platform/speech';
 import type { Calibration } from '../pose/metrics';
 import { IconSwap, IconX } from './Icons';
-import { TutorEngine, type DebriefState, type Heard, type RunSpec, type SessionCalibration, type Snapshot } from './engine';
+import { TutorEngine, type DebriefState, type RunSpec, type SessionCalibration, type Snapshot } from './engine';
 import { FigureView } from './FigureView';
 import { CameraProblem, DebriefCard, FramingGuide, HeardToast, PhaseLine, RunControls, ScoreMeter, SummaryPanel } from './RunParts';
 
 declare global {
   interface Window {
-    /** Test hook: hands a phrase to the voice commands as if speech recognition heard it. */
-    __tutorHeard?: (text: string) => Promise<Heard>;
     /** Test hook: the tutor screen's current state. */
     __tutorState?: () => Snapshot;
   }
@@ -74,10 +72,8 @@ function RunView({ engine, onAgain, onHome }: Props & { engine: TutorEngine }) {
 
   useEffect(() => {
     if (pane.current && overlay.current) void engine.start(pane.current, overlay.current);
-    window.__tutorHeard = (text) => engine.heard(text);
     window.__tutorState = engine.snapshot;
     return () => {
-      window.__tutorHeard = undefined;
       window.__tutorState = undefined;
     };
   }, [engine]);

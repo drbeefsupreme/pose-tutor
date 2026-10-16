@@ -23,17 +23,14 @@ function fakePost(reply: JsonReply | Error): { post: PostJson; sent: Sent[] } {
 }
 
 describe('parseChoiceAnswer', () => {
-  it('returns choice, confidence and a probability for every option', () => {
+  it('returns the choice and its confidence', () => {
     const body = { answers: { intent: { type: 'choice', choice: 'next', confidence: 0.9, probabilities: { next: 0.95, repeat: 0.05 } } } };
-    expect(parseChoiceAnswer(body, ['next', 'repeat', 'stop'])).toEqual({
-      choice: 'next',
-      confidence: 0.9,
-      probabilities: { next: 0.95, repeat: 0.05, stop: 0 },
-    });
+    expect(parseChoiceAnswer(body, ['next', 'repeat', 'stop'])).toEqual({ choice: 'next', confidence: 0.9 });
   });
 
   it('rejects a choice outside the options and malformed bodies', () => {
     expect(parseChoiceAnswer({ answers: { intent: { choice: 'jump', confidence: 1, probabilities: {} } } }, ['next'])).toBeNull();
+    expect(parseChoiceAnswer({ answers: { intent: { choice: 'next', confidence: 1 } } }, ['next'])).toBeNull();
     expect(parseChoiceAnswer(null, ['next'])).toBeNull();
     expect(parseChoiceAnswer('oops', ['next'])).toBeNull();
   });
@@ -42,11 +39,7 @@ describe('parseChoiceAnswer', () => {
 describe('chooseIntent', () => {
   it('posts one Choice question with the transcript to jev and reads the answer', async () => {
     const { post, sent } = fakePost({ status: 200, body: ANSWER });
-    expect(await chooseIntent(post, 'k-1', 'could you go on', OPTIONS)).toEqual({
-      choice: 'next',
-      confidence: 0.93,
-      probabilities: { next: 0.93, stop: 0.07 },
-    });
+    expect(await chooseIntent(post, 'k-1', 'could you go on', OPTIONS)).toEqual({ choice: 'next', confidence: 0.93 });
     expect(sent).toEqual([
       {
         url: 'https://api.typesafe.ai/v1/systemone',

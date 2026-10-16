@@ -5,7 +5,7 @@
 // left/right labels. Only the on-screen preview is mirrored.
 
 import type { PluginListenerHandle } from '@capacitor/core';
-import type { CameraFailure, Delegate } from './types';
+import type { Delegate } from './types';
 
 export interface NativeLandmark {
   readonly x: number;
@@ -38,18 +38,10 @@ export interface PoseStartOptions {
   readonly devicePixelRatio: number;
 }
 
-/**
- * Rejections from `start` carry `code` set to a CameraFailure ('denied' | 'noDevice' | 'busy' | 'unsupported')
- * and a human-readable `message`.
- */
-export interface PoseStartFailure {
-  readonly code: CameraFailure;
-  readonly message: string;
-}
-
 export interface TutorPosePlugin {
   /** Asks for the camera permission if needed, opens the front camera, shows the mirrored preview at `rect` behind
-   * the WebView and starts LIVE_STREAM detection (full model, GPU delegate with CPU fallback). */
+   * the WebView and starts LIVE_STREAM detection (full model, GPU delegate with CPU fallback). A rejection carries
+   * `code` set to a CameraFailure and a human-readable `message`. */
   start(options: PoseStartOptions): Promise<{ delegate: Delegate }>;
   setPreviewRect(options: { rect: PreviewRect }): Promise<void>;
   /** The next frames come from a fresh detection (drops the landmarker's tracking state), and the next timed
