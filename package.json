@@ -12,6 +12,7 @@
     "fetch-model": "node scripts/fetch-model.ts",
     "figure": "bun scripts/figure/build.ts",
     "android:build": "scripts/android/build.sh",
+    "android:lint": "scripts/android/lint.sh",
     "android:install": "scripts/android/install.sh",
     "android:emulator": "scripts/android/emulator.sh",
     "android:gate": "node scripts/android/gate.ts",

@@ -35,6 +35,13 @@ android {
     androidResources {
         noCompress += ['task']
     }
+    // npm run android:lint. lint-baseline.xml lists the findings from before lint was a gate; any new finding fails.
+    lint {
+        baseline = file('lint-baseline.xml')
+        warningsAsErrors = true
+        // These checks ask the network for newer versions, so their result changes with no code change.
+        disable += ['GradleDependency', 'AndroidGradlePluginVersion', 'NewerVersionAvailable']
+    }
 }
 
 kotlin {
