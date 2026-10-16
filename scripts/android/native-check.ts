@@ -159,7 +159,7 @@ main(async (cleanup) => {
   const databases = adb('shell', 'run-as', APP_ID, 'ls', 'databases', '2>/dev/null', '||', 'true').trim().split(/\s+/).filter(Boolean);
   const jobs = adb('shell', 'dumpsys', 'jobscheduler').split('\n').filter((l) => l.includes(APP_ID) && /JOB #|datatransport/.test(l));
   const telemetry = `app databases: ${databases.join(', ') || 'none'}; scheduled jobs of the app: ${jobs.length}${jobs.length > 0 ? ` (${jobs.map((j) => j.trim()).join('; ')})` : ''}`;
-  console.log(`INFO usage-metrics queue (datatransport, MediaPipe and ML Kit; see telemetry.txt): ${telemetry}`);
+  console.log(`INFO usage-metrics queue (datatransport, MediaPipe and ML Kit; disclosed in README.md, What leaves the phone): ${telemetry}`);
 
   const passed = checks.filter((c) => c.pass).length;
   const report = [
@@ -168,7 +168,7 @@ main(async (cleanup) => {
     `- When: ${new Date().toISOString()}`,
     `- Device: ${SERIAL} (AVD ${AVD}, Android ${adb('shell', 'getprop', 'ro.build.version.release').trim()}, ${adb('shell', 'getprop', 'ro.product.cpu.abi').trim()}), AICore: ${aicore}`,
     `- APK: ${relative(ROOT, apk)}`,
-    `- Usage-metrics queue (com.google.android.datatransport, used by MediaPipe and ML Kit; see telemetry.txt): ${telemetry}`,
+    `- Usage-metrics queue (com.google.android.datatransport, used by MediaPipe and ML Kit; disclosed in README.md, What leaves the phone): ${telemetry}`,
     `- Result: ${passed}/${checks.length} checks pass`,
     '',
     '| Check | Result | Detail |',
