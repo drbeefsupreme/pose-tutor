@@ -71,8 +71,10 @@ const GPU_MODES = {
 } as const;
 type GpuMode = keyof typeof GPU_MODES;
 
+type FrontCamera = 'none' | 'emulated' | `videofile:${string}`;
+
 interface EmulatorOptions {
-  readonly camera: string;
+  readonly camera: FrontCamera;
   readonly gpu: GpuMode;
   readonly reuse: boolean;
 }

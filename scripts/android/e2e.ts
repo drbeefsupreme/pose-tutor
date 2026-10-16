@@ -26,7 +26,7 @@ const SECONDS_PER_FRAME = 0.25;
 const TRANSITION_FRAMES = 6;
 const SETTINGS: TutorSettings = { voiceCommands: true, debrief: false, holdGoal: 10 };
 const VOICE_PHRASE = 'next one please';
-const FREE_PHRASE = 'could you go to the next one';
+const JEV_ONLY_PHRASE = 'could you go to the next one';
 const MIRROR_MIN_CHANGE_DEG = 30;
 const COACH_UNAVAILABLE = 'On-device coach is not available on this phone:';
 const JEV_HOST = new URL(JEV_ENDPOINT).host;
@@ -230,7 +230,7 @@ const ARMS = ['upperarmL', 'upperarmR'] as const;
 type Arm = (typeof ARMS)[number];
 
 interface TimedValue {
-  readonly t: number;
+  readonly secondsAfterCameraStart: number;
   readonly v: number;
 }
 
@@ -244,13 +244,13 @@ interface ArmFollow {
 
 function armFollow(all: readonly Sample[], arm: Arm): ArmFollow {
   const live = all.find((s) => s.camera === 'live')?.t ?? NaN;
-  const raw = all.filter((s) => s.landmarks > all[0].landmarks).flatMap((s) => (s[arm] === undefined ? [] : [{ t: (s.t - live) / 1000, v: s[arm] }]));
-  const series = raw.map((p, i) => ({ t: p.t, v: median(raw.slice(Math.max(0, i - 2), i + 3).map((q) => q.v)) }));
+  const raw = all.filter((s) => s.landmarks > all[0].landmarks).flatMap((s) => (s[arm] === undefined ? [] : [{ secondsAfterCameraStart: (s.t - live) / 1000, v: s[arm] }]));
+  const series = raw.map((p, i) => ({ secondsAfterCameraStart: p.secondsAfterCameraStart, v: median(raw.slice(Math.max(0, i - 2), i + 3).map((q) => q.v)) }));
   const start = median(series.slice(0, 10).map((p) => p.v));
   const up = series.find((p) => p.v > start + MIRROR_MIN_CHANGE_DEG);
   let top = up;
   let down: TimedValue | undefined;
-  for (const p of up ? series.filter((q) => q.t > up.t) : []) {
+  for (const p of up ? series.filter((q) => q.secondsAfterCameraStart > up.secondsAfterCameraStart) : []) {
     if (top && p.v > top.v) top = p;
     if (top && p.v < top.v - MIRROR_MIN_CHANGE_DEG) {
       down = p;
@@ -670,7 +670,7 @@ main(async (cleanup) => {
       if ((up && followed.every((a) => a.down)) || Date.now() > deadline) break;
       await sleep(1000);
     }
-    const deg = (p: { t: number; v: number } | undefined) => (p ? `${p.v.toFixed(0)}° at ${p.t.toFixed(1)} s` : 'never');
+    const deg = (p: TimedValue | undefined) => (p ? `${p.v.toFixed(0)}° at ${p.secondsAfterCameraStart.toFixed(1)} s` : 'never');
     event(`arms ${JSON.stringify(followed)}`);
     check(
       `Mirror: the figure's upper arms follow the clip (up, then down again, by more than ${MIRROR_MIN_CHANGE_DEG}°)`,
@@ -734,15 +734,15 @@ main(async (cleanup) => {
     await cameraLive();
     const step0 = await until('the first build-up step', 90_000, (s) => s.calibration.kind === 'ready' && s.stage?.kind === 'step');
     const before = step0.stage?.kind === 'step' ? step0.stage.index : -1;
-    const accepted = (await ev(`window.__tutorVoice(${JSON.stringify(FREE_PHRASE)})`)) === true;
-    const after = await until('the free phrase', 20_000, (s) => s.heard?.text === FREE_PHRASE).catch(() => undefined);
+    const accepted = (await ev(`window.__tutorVoice(${JSON.stringify(JEV_ONLY_PHRASE)})`)) === true;
+    const after = await until('the free phrase', 20_000, (s) => s.heard?.text === JEV_ONLY_PHRASE).catch(() => undefined);
     const heard = after?.heard;
     const moved = after !== undefined && (after.stage?.kind !== 'step' || after.stage.index > before);
-    event(`voice "${FREE_PHRASE}": accepted ${accepted}, heard ${JSON.stringify(heard)}, stage ${JSON.stringify(after?.stage)}`, after);
+    event(`voice "${JEV_ONLY_PHRASE}": accepted ${accepted}, heard ${JSON.stringify(heard)}, stage ${JSON.stringify(after?.stage)}`, after);
     check(
       'A free phrase is decided by jev from the phone and acts',
       accepted && heard?.via === 'jev' && heard.command === 'next' && moved,
-      `"${FREE_PHRASE}": command ${heard?.command ?? 'none'} via ${heard?.via ?? '-'}${heard?.confidence === undefined ? '' : `, confidence ${heard.confidence.toFixed(2)}`}; step ${before} -> ${after?.stage?.kind === 'step' ? after.stage.index : (after?.stage?.kind ?? '-')}`,
+      `"${JEV_ONLY_PHRASE}": command ${heard?.command ?? 'none'} via ${heard?.via ?? '-'}${heard?.confidence === undefined ? '' : `, confidence ${heard.confidence.toFixed(2)}`}; step ${before} -> ${after?.stage?.kind === 'step' ? after.stage.index : (after?.stage?.kind ?? '-')}`,
     );
 
     await endBuildUp();
