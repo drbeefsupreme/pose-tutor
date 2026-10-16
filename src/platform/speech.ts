@@ -1,5 +1,9 @@
-/** The voice fields the wrapper reads. */
-export type Voice = Pick<SpeechSynthesisVoice, 'voiceURI' | 'name' | 'lang' | 'default'>;
+/** A text-to-speech voice. `localService` is false for a network voice, which sends the text to Google. */
+export interface Voice {
+  readonly voiceURI: string;
+  readonly lang: string;
+  readonly localService: boolean;
+}
 
 /** One sentence handed to an engine. The engine calls `done` once when it ends, fails or is cancelled. */
 export interface Line {

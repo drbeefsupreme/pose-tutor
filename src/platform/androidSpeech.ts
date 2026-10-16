@@ -28,7 +28,6 @@ export interface SpeechLogEntry {
 }
 
 interface NativeVoice extends Voice {
-  readonly localService: boolean;
   /** Position in the plugin's full voice list, which `speak` takes as `voice`. */
   readonly index: number;
 }
@@ -41,10 +40,10 @@ interface InFlight {
 const VOICE_RETRY_MS = 1000;
 const VOICE_TRIES = 10;
 
-/** The English voices, named by their engine id because the plugin names every en-US voice the same. */
+/** The English voices. Settings names them by their engine id, because the plugin names every en-US voice the same. */
 export function englishVoices(all: readonly PluginVoice[]): NativeVoice[] {
   return all.flatMap((v, index) =>
-    v.lang.toLowerCase().startsWith('en') ? [{ voiceURI: v.voiceURI, name: v.voiceURI, lang: v.lang, default: false, localService: v.localService, index }] : [],
+    v.lang.toLowerCase().startsWith('en') ? [{ voiceURI: v.voiceURI, lang: v.lang, localService: v.localService, index }] : [],
   );
 }
 

@@ -58,7 +58,7 @@ export function Settings({ settings, onSettings, health, onRecheck }: Props) {
   const set = (patch: Partial<TutorSettings>) => onSettings({ ...settings, ...patch });
   const voices = speech.voices();
   const chosen = voices.find((v) => v.voiceURI === speech.voice);
-  const network = chosen !== undefined && 'localService' in chosen && chosen.localService === false;
+  const network = chosen !== undefined && !chosen.localService;
 
   return (
     <section className="tutor-settings" aria-labelledby="tutor-settings-title">
@@ -70,7 +70,7 @@ export function Settings({ settings, onSettings, health, onRecheck }: Props) {
           <option value="">System default (English)</option>
           {voices.map((v) => (
             <option key={v.voiceURI} value={v.voiceURI}>
-              {v.name} ({v.lang})
+              {v.voiceURI} ({v.lang})
             </option>
           ))}
         </select>

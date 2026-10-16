@@ -5,8 +5,8 @@ class FakeEngine implements SpeechEngine {
   readonly lines: Line[] = [];
   cancels = 0;
   private readonly list: Voice[] = [
-    { voiceURI: 'a', name: 'A', lang: 'en-US', default: true },
-    { voiceURI: 'b', name: 'B', lang: 'en-GB', default: false },
+    { voiceURI: 'a', lang: 'en-US', localService: true },
+    { voiceURI: 'b', lang: 'en-GB', localService: true },
   ];
   speak(line: Line): void {
     this.lines.push(line);
@@ -83,7 +83,7 @@ describe('Speech', () => {
     expect({
       muted: whileMuted,
       voice: reloaded.voice,
-      lines: engine.lines.map((l) => [l.text, l.voice?.name]),
-    }).toEqual({ muted: 'muted', voice: 'b', lines: [['two', 'B']] });
+      lines: engine.lines.map((l) => [l.text, l.voice?.voiceURI]),
+    }).toEqual({ muted: 'muted', voice: 'b', lines: [['two', 'b']] });
   });
 });

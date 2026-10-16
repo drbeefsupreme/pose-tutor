@@ -46,7 +46,7 @@ async function engine() {
 describe('nativeSpeech', () => {
   it('lists the English voices by engine id', async () => {
     const { speech } = await engine();
-    expect(speech.voices().map((v) => `${v.name} ${v.lang}`)).toEqual([
+    expect(speech.voices().map((v) => `${v.voiceURI} ${v.lang}`)).toEqual([
       'en-gb-x-gba-local en-GB',
       'en-us-x-iob-local en-US',
       'en-us-x-iob-network en-US',
