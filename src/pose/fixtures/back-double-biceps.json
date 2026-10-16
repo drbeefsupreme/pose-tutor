@@ -1,0 +1,25 @@
+{
+  "about": "Hand-built back double biceps seen from behind (the left side is on the image left): arms as in the front double biceps, right foot stepped back with the knee bent.",
+  "aspect": 1,
+  "joints": {
+    "nose": [0.5, 0.205],
+    "leftEar": [0.465, 0.2],
+    "rightEar": [0.535, 0.2],
+    "leftShoulder": [0.38, 0.3],
+    "rightShoulder": [0.62, 0.3],
+    "leftHip": [0.44, 0.6],
+    "rightHip": [0.56, 0.6],
+    "leftElbow": [0.23, 0.282],
+    "leftWrist": [0.291, 0.167],
+    "rightElbow": [0.77, 0.282],
+    "rightWrist": [0.709, 0.167],
+    "leftKnee": [0.415, 0.78],
+    "leftAnkle": [0.368, 0.95],
+    "leftHeel": [0.372, 0.965],
+    "leftFootIndex": [0.35, 0.955],
+    "rightKnee": [0.62, 0.77],
+    "rightAnkle": [0.632, 0.94],
+    "rightHeel": [0.63, 0.95],
+    "rightFootIndex": [0.65, 0.945]
+  }
+}

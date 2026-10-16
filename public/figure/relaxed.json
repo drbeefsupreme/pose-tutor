@@ -1,0 +1,268 @@
+{
+ "pose": "relaxed",
+ "vertexCount": 139661,
+ "indexCount": 838296,
+ "h": 0.005,
+ "chunks": [
+  {
+   "name": "position",
+   "type": "f32",
+   "size": 3,
+   "normalized": false,
+   "scale": 1,
+   "offset": 0,
+   "byteLength": 1675932
+  },
+  {
+   "name": "normal",
+   "type": "i16",
+   "size": 3,
+   "normalized": true,
+   "scale": 1,
+   "offset": 1675932,
+   "byteLength": 837966
+  },
+  {
+   "name": "index",
+   "type": "u32",
+   "size": 1,
+   "normalized": false,
+   "scale": 1,
+   "offset": 2513900,
+   "byteLength": 3353184
+  },
+  {
+   "name": "aTrunks",
+   "type": "i16",
+   "size": 1,
+   "normalized": true,
+   "scale": 0.1,
+   "offset": 5867084,
+   "byteLength": 279322
+  },
+  {
+   "name": "aAo",
+   "type": "u8",
+   "size": 1,
+   "normalized": true,
+   "scale": 1,
+   "offset": 6146408,
+   "byteLength": 139661
+  },
+  {
+   "name": "aBone",
+   "type": "u8",
+   "size": 4,
+   "normalized": false,
+   "scale": 1,
+   "offset": 6286072,
+   "byteLength": 558644
+  },
+  {
+   "name": "aBoneW",
+   "type": "u8",
+   "size": 4,
+   "normalized": true,
+   "scale": 1,
+   "offset": 6844716,
+   "byteLength": 558644
+  }
+ ],
+ "rig": {
+  "bones": [
+   "pelvis",
+   "lumbar",
+   "chest",
+   "neck",
+   "head",
+   "scapL",
+   "upperarmL",
+   "forearmL",
+   "handL",
+   "thighL",
+   "shinL",
+   "footL",
+   "scapR",
+   "upperarmR",
+   "forearmR",
+   "handR",
+   "thighR",
+   "shinR",
+   "footR"
+  ],
+  "parent": [
+   -1,
+   0,
+   1,
+   2,
+   3,
+   2,
+   5,
+   6,
+   7,
+   0,
+   9,
+   10,
+   2,
+   12,
+   13,
+   14,
+   0,
+   16,
+   17
+  ],
+  "joints": [
+   [
+    0,
+    0.98,
+    0
+   ],
+   [
+    0,
+    1.03,
+    -0.03
+   ],
+   [
+    0,
+    1.18,
+    -0.04
+   ],
+   [
+    0,
+    1.5,
+    -0.05
+   ],
+   [
+    0,
+    1.6,
+    -0.01
+   ],
+   [
+    0.025,
+    1.465,
+    0.07
+   ],
+   [
+    0.205,
+    1.445,
+    -0.005
+   ],
+   [
+    0.33,
+    1.185,
+    -0.02
+   ],
+   [
+    0.385,
+    0.935,
+    0.03
+   ],
+   [
+    0.092,
+    0.925,
+    0
+   ],
+   [
+    0.115,
+    0.505,
+    0
+   ],
+   [
+    0.14,
+    0.085,
+    -0.02
+   ],
+   [
+    -0.025,
+    1.465,
+    0.07
+   ],
+   [
+    -0.205,
+    1.445,
+    -0.005
+   ],
+   [
+    -0.33,
+    1.185,
+    -0.02
+   ],
+   [
+    -0.385,
+    0.935,
+    0.03
+   ],
+   [
+    -0.092,
+    0.925,
+    0
+   ],
+   [
+    -0.115,
+    0.505,
+    0
+   ],
+   [
+    -0.14,
+    0.085,
+    -0.02
+   ]
+  ],
+  "contacts": [
+   {
+    "bone": 11,
+    "p": [
+     0.134,
+     0,
+     -0.075
+    ]
+   },
+   {
+    "bone": 11,
+    "p": [
+     0.135,
+     0,
+     0.185
+    ]
+   },
+   {
+    "bone": 18,
+    "p": [
+     -0.134,
+     0,
+     -0.075
+    ]
+   },
+   {
+    "bone": 18,
+    "p": [
+     -0.135,
+     0,
+     0.185
+    ]
+   }
+  ],
+  "bind": {
+   "yaw": 0,
+   "bones": {
+    "upperarmL": [
+     [
+      0,
+      0,
+      1,
+      4
+     ]
+    ],
+    "upperarmR": [
+     [
+      0,
+      0,
+      -1,
+      4
+     ]
+    ]
+   }
+  }
+ },
+ "generated": "2026-10-16T21:48:57.414Z"
+}

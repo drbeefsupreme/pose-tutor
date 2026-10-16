@@ -1,0 +1,25 @@
+{
+  "about": "Hand-built front lat spread: elbows out about 50 degrees and bent about 107 degrees, fists on the lower waist.",
+  "aspect": 1,
+  "joints": {
+    "nose": [0.5, 0.21],
+    "leftEar": [0.535, 0.2],
+    "rightEar": [0.465, 0.2],
+    "leftShoulder": [0.62, 0.3],
+    "rightShoulder": [0.38, 0.3],
+    "leftHip": [0.56, 0.6],
+    "rightHip": [0.44, 0.6],
+    "leftElbow": [0.735, 0.395],
+    "rightElbow": [0.265, 0.395],
+    "leftWrist": [0.62, 0.47],
+    "rightWrist": [0.38, 0.47],
+    "leftKnee": [0.55, 0.78],
+    "rightKnee": [0.45, 0.78],
+    "leftAnkle": [0.56, 0.95],
+    "rightAnkle": [0.44, 0.95],
+    "leftHeel": [0.555, 0.97],
+    "rightHeel": [0.445, 0.97],
+    "leftFootIndex": [0.59, 0.985],
+    "rightFootIndex": [0.41, 0.985]
+  }
+}

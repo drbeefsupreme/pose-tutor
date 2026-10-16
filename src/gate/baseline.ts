@@ -1,0 +1,76 @@
+// The committed gate baseline (baseline.json) and the comparison of a run against it. scripts/android/gate.ts writes
+// the baseline with --save-baseline and checks every other run against it. Node runs this file directly, so it has
+// type imports only.
+import type { PoseId } from '../pose/types';
+import type { Backend, GateRun } from './criteria';
+import type { DetectMode } from './page';
+
+/** An own-pose score may move this many points from the baseline. */
+export const MAX_DIFF = 5;
+
+export interface BaselineCase {
+  readonly id: string;
+  readonly pose: PoseId;
+  /** Own-pose score; null when the call gave no score. */
+  readonly own: number | null;
+  readonly topCue: string | null;
+  /** For a fault render, the cue that must come first. */
+  readonly expectedCue?: string;
+}
+
+export interface Baseline {
+  readonly at: string;
+  readonly device: string;
+  readonly mode: DetectMode;
+  readonly backend: Backend;
+  /** The criterion failures of the run (src/gate/criteria.ts). */
+  readonly failures: readonly string[];
+  readonly cases: readonly BaselineCase[];
+  /** Why this baseline was captured, written by hand after --save-baseline; the report shows it. */
+  readonly note?: string;
+}
+
+export function toBaseline(run: GateRun, failures: readonly string[], device: string, mode: DetectMode): Baseline {
+  return {
+    at: run.at,
+    device,
+    mode,
+    backend: run.backend,
+    failures,
+    cases: [
+      ...run.poses.map((c) => ({ id: c.id, pose: c.pose, own: c.scores[c.pose], topCue: c.topCue })),
+      ...run.faults.map((c) => ({ id: c.id, pose: c.pose, own: c.scores[c.pose], topCue: c.topCue, expectedCue: c.expectedCue })),
+    ],
+  };
+}
+
+export interface CaseComparison {
+  readonly id: string;
+  readonly baseline: BaselineCase;
+  /** The run's own score and top cue; undefined when the run has no such case. */
+  readonly run: { readonly own: number | null; readonly topCue: string | null } | undefined;
+  /** Run minus baseline own score; null when either has no score. */
+  readonly diff: number | null;
+  readonly ok: boolean;
+}
+
+export interface Comparison {
+  readonly cases: readonly CaseComparison[];
+  /** Largest absolute own-score difference. */
+  readonly maxDiff: number;
+  /** 0 criterion failures and every own-pose score within MAX_DIFF of the baseline. */
+  readonly passed: boolean;
+}
+
+/** A case passes when both scores are within MAX_DIFF, or when neither run scored it. */
+export function compare(run: GateRun, failures: readonly string[], baseline: Baseline): Comparison {
+  const byId = new Map([...run.poses, ...run.faults].map((c) => [c.id, { own: c.scores[c.pose], topCue: c.topCue }]));
+  const cases = baseline.cases.map((b): CaseComparison => {
+    const now = byId.get(b.id);
+    const diff = now === undefined || now.own === null || b.own === null ? null : now.own - b.own;
+    const ok = now !== undefined && (diff === null ? now.own === b.own : Math.abs(diff) <= MAX_DIFF);
+    return { id: b.id, baseline: b, run: now, diff, ok };
+  });
+  const maxDiff = Math.max(0, ...cases.map((c) => Math.abs(c.diff ?? 0)));
+  return { cases, maxDiff, passed: failures.length === 0 && cases.every((c) => c.ok) };
+}
