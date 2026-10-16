@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "check": "npm run lint && npm run typecheck && npm test",
+    "check": "npm run lint && npm run typecheck && npm test && node scripts/check-docs.ts",
     "check:android": "node scripts/check-android.ts",
     "lint": "oxlint --deny-warnings",
     "test": "vitest run",
