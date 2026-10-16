@@ -1,5 +1,4 @@
-// What the tutor needs from the device. The app implements it with Capacitor plugins and the native pose plugin
-// (src/platform/android.ts); tests implement it with fakes. The engine and the views use only this, never browser or
+// What the tutor gets from the device (src/platform/android.ts). The engine and the views use these, never browser or
 // plugin APIs directly.
 
 import type { IntentReply } from '../modes/commands';
@@ -7,7 +6,7 @@ import type { PoseLandmarks } from '../pose/landmarks';
 import type { PoseId } from '../pose/types';
 import type { PhotoId, PhotoMeta, SavePhotoRequest } from '../progress/types';
 import type { NanoDownloadProgress, NanoStatusResult } from './coachPlugin';
-import type { SpeechEngine, SpeechStore } from './speech';
+import type { Speech, SpeechStore } from './speech';
 
 export type Delegate = 'GPU' | 'CPU';
 export type CameraFailure = 'denied' | 'noDevice' | 'busy' | 'unsupported';
@@ -106,9 +105,13 @@ export interface KeepAwake {
   release(): Promise<void>;
 }
 
+/**
+ * The device under the tutor: `platform` in src/platform/android.ts. The engine takes it as this interface, so the
+ * engine's state types, which the device scripts import, compile without the Capacitor runtime.
+ */
 export interface Platform {
   poseSource(): PoseSource;
-  speechEngine(): SpeechEngine;
+  readonly speech: Speech;
   voiceInput(onPhrase: (text: string) => void, onState: (state: ListenState) => void): VoiceInput;
   readonly photos: PhotoStore;
   readonly coach: CoachClient;

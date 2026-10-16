@@ -3,8 +3,7 @@ import { HOLD_GOALS_S } from '../modes/hold';
 import type { ModeId } from '../modes/mode';
 import { BEST_KEY, parseBest } from '../modes/records';
 import type { TutorSettings } from '../modes/settings';
-import { usePlatform } from '../platform/context';
-import type { Speech } from '../platform/speech';
+import { platform } from '../platform/android';
 import type { Health } from '../platform/types';
 import type { PoseId } from '../pose/types';
 import { POSE_LABELS } from '../progress/format';
@@ -38,13 +37,12 @@ interface Props {
   readonly onChoose: (choice: HomeChoice) => void;
   readonly settings: TutorSettings;
   readonly onSettings: (settings: TutorSettings) => void;
-  readonly speech: Speech;
   readonly health: Health | undefined;
   readonly onRecheck: () => void;
 }
 
-export function Home({ pose, onPose, onChoose, settings, onSettings, speech, health, onRecheck }: Props) {
-  const best = parseBest(usePlatform().store.getItem(BEST_KEY)).round;
+export function Home({ pose, onPose, onChoose, settings, onSettings, health, onRecheck }: Props) {
+  const best = parseBest(platform.store.getItem(BEST_KEY)).round;
   return (
     <div className="tutor-home">
       <div className="tutor-home-main">
@@ -82,7 +80,7 @@ export function Home({ pose, onPose, onChoose, settings, onSettings, speech, hea
         <PosePicker pose={pose} onPose={onPose} />
       </div>
       <aside className="tutor-home-side">
-        <Settings settings={settings} onSettings={onSettings} speech={speech} health={health} onRecheck={onRecheck} />
+        <Settings settings={settings} onSettings={onSettings} health={health} onRecheck={onRecheck} />
       </aside>
     </div>
   );

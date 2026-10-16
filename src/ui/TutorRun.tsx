@@ -2,8 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { Command } from '../modes/commands';
 import type { FigureTarget } from '../modes/mode';
 import type { TutorSettings } from '../modes/settings';
-import { usePlatform } from '../platform/context';
-import type { Speech } from '../platform/speech';
+import { platform } from '../platform/android';
 import type { Calibration } from '../pose/metrics';
 import { IconSwap, IconX } from './Icons';
 import { TutorEngine, type DebriefState, type RunSpec, type SessionCalibration, type Snapshot } from './engine';
@@ -32,7 +31,6 @@ const RELAXED: FigureTarget = { kind: 'pose', pose: 'relaxedFront' };
 interface Props {
   readonly spec: RunSpec;
   readonly settings: TutorSettings;
-  readonly speech: Speech;
   readonly calibration: SessionCalibration;
   readonly onCalibration: (calibration: Calibration | 'skipped') => void;
   readonly onAgain: () => void;
@@ -42,12 +40,11 @@ interface Props {
 /** One drill: an engine per mount. Remount (a new key) to start again. */
 export function TutorRun(props: Props) {
   const [engine, setEngine] = useState<TutorEngine | undefined>();
-  const platform = usePlatform();
-  const initial = useRef({ ...props, platform });
+  const initial = useRef(props);
 
   useEffect(() => {
-    const { spec, speech, settings, calibration, onCalibration, platform } = initial.current;
-    const e = new TutorEngine({ spec, speech, settings, calibration, onCalibration, platform });
+    const { spec, settings, calibration, onCalibration } = initial.current;
+    const e = new TutorEngine({ spec, settings, calibration, onCalibration, platform });
     setEngine(e);
     return () => {
       e.dispose();

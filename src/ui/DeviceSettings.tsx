@@ -2,8 +2,11 @@
 // commands. The key is write-only here: the page shows whether one is stored, never the key.
 
 import { useState, type FormEvent } from 'react';
+import { platform } from '../platform/android';
 import type { NanoDownloadProgress, NanoStatus } from '../platform/coachPlugin';
-import type { CoachNote, DeviceSetup, Health } from '../platform/types';
+import type { CoachNote, Health } from '../platform/types';
+
+const { setup } = platform;
 
 type Tone = 'good' | 'warn' | 'bad' | 'muted';
 
@@ -79,7 +82,7 @@ function SelfTestResult({ test }: { test: SelfTest }) {
   }
 }
 
-function OnDeviceCoach({ setup, health, onRecheck }: { setup: DeviceSetup; health: Health | undefined; onRecheck: () => void }) {
+function OnDeviceCoach({ health, onRecheck }: { health: Health | undefined; onRecheck: () => void }) {
   const [download, setDownload] = useState<Download>({ kind: 'idle' });
   const [test, setTest] = useState<SelfTest>({ kind: 'idle' });
   const status = health?.coach;
@@ -134,7 +137,7 @@ function OnDeviceCoach({ setup, health, onRecheck }: { setup: DeviceSetup; healt
   );
 }
 
-function VoiceCommandKey({ setup, health, onRecheck }: { setup: DeviceSetup; health: Health | undefined; onRecheck: () => void }) {
+function VoiceCommandKey({ health, onRecheck }: { health: Health | undefined; onRecheck: () => void }) {
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -207,7 +210,7 @@ function VoiceCommandKey({ setup, health, onRecheck }: { setup: DeviceSetup; hea
   );
 }
 
-export function DeviceSettings(props: { setup: DeviceSetup; health: Health | undefined; onRecheck: () => void }) {
+export function DeviceSettings(props: { health: Health | undefined; onRecheck: () => void }) {
   return (
     <>
       <OnDeviceCoach {...props} />

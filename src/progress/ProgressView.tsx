@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { usePlatform } from '../platform/context';
+import { platform } from '../platform/android';
 import type { PoseId } from '../pose/types';
 import { IconFrame, IconX } from '../ui/Icons';
 import { formatDate, POSE_LABELS, scoreTone } from './format';
@@ -9,6 +9,7 @@ import type { PhotoId, PhotoMeta } from './types';
 import './progress.css';
 
 const POSES = Object.keys(POSE_LABELS) as PoseId[];
+const store = platform.photos;
 
 interface Confirm {
   title: string;
@@ -71,7 +72,6 @@ function Empty() {
 
 /** Timeline, compare and score trend of the saved progress photos, per pose. */
 export function ProgressView() {
-  const { photos: store } = usePlatform();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const [pose, setPose] = useState<PoseId | null>(null);
   const [picked, setPicked] = useState<{ before?: PhotoId; after?: PhotoId }>({});
@@ -85,7 +85,7 @@ export function ProgressView() {
         (photos) => setLoad({ kind: 'ready', photos }),
         (err: unknown) => setLoad({ kind: 'error', message: err instanceof Error ? err.message : String(err) }),
       ),
-    [store],
+    [],
   );
   useEffect(() => {
     void reload();

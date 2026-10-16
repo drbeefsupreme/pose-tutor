@@ -1,7 +1,7 @@
-// The Android Platform: the native pose plugin (./posePlugin.ts) for the camera and tracking, Android TextToSpeech,
-// the native voice plugin (./voicePlugin.ts) for voice commands, app-private files for the photos, Gemini Nano on the
-// phone for the coach and jev for the intent (./androidCoach.ts), and the KeepAwake plugin. The WebView's localStorage
-// is the store; it persists in the app's data like any app storage.
+// The device under the tutor: the native pose plugin (./posePlugin.ts) for the camera and tracking, Android
+// TextToSpeech, the native voice plugin (./voicePlugin.ts) for voice commands, app-private files for the photos, Gemini
+// Nano on the phone for the coach and jev for the intent (./androidCoach.ts), and the KeepAwake plugin. The WebView's
+// localStorage is the store; it persists in the app's data like any app storage.
 
 import { KeepAwake as KeepAwakePlugin } from '@capacitor-community/keep-awake';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
@@ -17,7 +17,7 @@ import type { TutorCoachPlugin } from './coachPlugin';
 import type { NativePoseFrame, PreviewRect, TutorPosePlugin } from './posePlugin';
 import type { TutorSecretsPlugin } from './secretsPlugin';
 import selfTestImage from './self-test-side-chest.png?inline';
-import type { SpeechEngine } from './speech';
+import { Speech } from './speech';
 import type { CameraFailure, Delegate, DeviceSetup, Platform, PoseFrame, PoseSource, PoseSourceStart } from './types';
 import type { TutorVoicePlugin } from './voicePlugin';
 
@@ -177,13 +177,12 @@ const { client: coach, setup } = deviceCoach({
   selfTestImage,
 });
 const speechLog: SpeechLogEntry[] = [];
-let speech: SpeechEngine | undefined;
 /** The voice input of the running drill; a disposed one ignores injected phrases. */
 let liveVoice: NativeVoiceInput | undefined;
 
-export const androidPlatform: Platform = {
+export const platform: Platform = {
   poseSource: nativePoseSource,
-  speechEngine: () => (speech ??= nativeSpeech(TextToSpeech, speechLog)),
+  speech: new Speech(nativeSpeech(TextToSpeech, speechLog), localStorage),
   voiceInput(onPhrase, onState) {
     liveVoice = new NativeVoiceInput(voice, onPhrase, onState);
     return liveVoice;

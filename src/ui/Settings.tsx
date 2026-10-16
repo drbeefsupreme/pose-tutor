@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import type { TutorSettings } from '../modes/settings';
-import { usePlatform } from '../platform/context';
+import { platform } from '../platform/android';
 import type { Speech } from '../platform/speech';
 import type { Health } from '../platform/types';
 import { DeviceSettings } from './DeviceSettings';
@@ -8,7 +8,6 @@ import { DeviceSettings } from './DeviceSettings';
 interface Props {
   readonly settings: TutorSettings;
   readonly onSettings: (settings: TutorSettings) => void;
-  readonly speech: Speech;
   readonly health: Health | undefined;
   /** Checks the coach and the intent again, after a change in the device setup. */
   readonly onRecheck: () => void;
@@ -53,9 +52,9 @@ function Privacy({ network }: { network: boolean }) {
   );
 }
 
-export function Settings({ settings, onSettings, speech, health, onRecheck }: Props) {
+export function Settings({ settings, onSettings, health, onRecheck }: Props) {
+  const { speech } = platform;
   useSpeechVersion(speech);
-  const { setup } = usePlatform();
   const set = (patch: Partial<TutorSettings>) => onSettings({ ...settings, ...patch });
   const voices = speech.voices();
   const chosen = voices.find((v) => v.voiceURI === speech.voice);
@@ -88,7 +87,7 @@ export function Settings({ settings, onSettings, speech, health, onRecheck }: Pr
         <input type="checkbox" checked={settings.debrief} onChange={(e) => set({ debrief: e.target.checked })} />
         Coach debrief after every hit pose
       </label>
-      <DeviceSettings setup={setup} health={health} onRecheck={onRecheck} />
+      <DeviceSettings health={health} onRecheck={onRecheck} />
 
       <Privacy network={network} />
     </section>

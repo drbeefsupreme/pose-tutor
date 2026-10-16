@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseSettings, SETTINGS_KEY, type TutorSettings } from '../modes/settings';
-import { usePlatform } from '../platform/context';
-import { Speech } from '../platform/speech';
+import { platform } from '../platform/android';
 import type { Health } from '../platform/types';
 import type { Calibration } from '../pose/metrics';
 import type { PoseId } from '../pose/types';
@@ -18,8 +17,6 @@ type Screen =
 
 /** The tutor: home (modes, pose, settings), a running drill, or the progress photos. */
 export function TutorApp() {
-  const platform = usePlatform();
-  const [speech] = useState(() => new Speech(platform.speechEngine(), platform.store));
   const [settings, setSettings] = useState<TutorSettings>(() => parseSettings(platform.store.getItem(SETTINGS_KEY)));
   const [calibration, setCalibration] = useState<SessionCalibration>(undefined);
   const [pose, setPose] = useState<PoseId>('frontDoubleBiceps');
@@ -34,13 +31,13 @@ export function TutorApp() {
       (next) => check === latestCheck.current && setHealth(next),
       (err: unknown) => console.warn('The coach did not answer the health check.', err),
     );
-  }, [platform]);
+  }, []);
 
   useEffect(recheck, [recheck]);
 
   useEffect(() => {
     platform.store.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  }, [platform, settings]);
+  }, [settings]);
 
   const choose = (choice: HomeChoice) => {
     if (choice === 'progress') setScreen({ kind: 'progress' });
@@ -50,7 +47,7 @@ export function TutorApp() {
 
   switch (screen.kind) {
     case 'home':
-      return <Home pose={pose} onPose={setPose} onChoose={choose} settings={settings} onSettings={setSettings} speech={speech} health={health} onRecheck={recheck} />;
+      return <Home pose={pose} onPose={setPose} onChoose={choose} settings={settings} onSettings={setSettings} health={health} onRecheck={recheck} />;
     case 'progress':
       return (
         <div className="tutor-progress">
@@ -66,7 +63,6 @@ export function TutorApp() {
           key={screen.attempt}
           spec={screen.spec}
           settings={settings}
-          speech={speech}
           calibration={calibration}
           onCalibration={(c: Calibration | 'skipped') => setCalibration(c)}
           onAgain={() => setScreen({ ...screen, attempt: screen.attempt + 1 })}

@@ -10,7 +10,6 @@ import type { Effect, ModeId, Stage } from '../modes/mode';
 import { BEST_KEY, mergeBest, parseBest, type NewBests } from '../modes/records';
 import { startDrill, type Drill, type DrillView, type StartedDrill } from '../modes/runner';
 import type { TutorSettings } from '../modes/settings';
-import type { Speech } from '../platform/speech';
 import type { CameraFailure, Delegate, ListenState, Platform, PoseFrame, PoseSource, PoseSourceStart, VoiceInput } from '../platform/types';
 import { filterFacing, NO_FACING, type FacingFilter } from '../pose/facing';
 import { POSE_CONNECTIONS, type PoseLandmarks } from '../pose/landmarks';
@@ -23,7 +22,7 @@ import type { Facing, PoseId, PoseScore } from '../pose/types';
 import type { PhotoMeta } from '../progress/types';
 
 // The tutor's live loop: pose source → smoother → score → drill, and the drill's effects → speech, photos and the
-// coach. Everything that decides what happens lives in src/modes; this shell wires it to the Platform.
+// coach. Everything that decides what happens lives in src/modes; this shell wires it to the device (src/platform).
 
 export interface RunSpec {
   readonly mode: ModeId;
@@ -106,7 +105,6 @@ function startRun(spec: RunSpec, now: number): StartedDrill {
 
 export interface EngineOptions {
   readonly spec: RunSpec;
-  readonly speech: Speech;
   readonly settings: TutorSettings;
   readonly calibration: SessionCalibration;
   readonly onCalibration: (calibration: Calibration | 'skipped') => void;
@@ -162,7 +160,8 @@ export class TutorEngine {
       listenError: undefined,
       bests: undefined,
     };
-    this.unsubscribeSpeech = options.speech.subscribe(() => this.listener.setSuppressed(options.speech.speaking));
+    const { speech } = options.platform;
+    this.unsubscribeSpeech = speech.subscribe(() => this.listener.setSuppressed(speech.speaking));
     this.listener.setEnabled(this.settings.voiceCommands);
   }
 
@@ -212,7 +211,7 @@ export class TutorEngine {
     if (this.awake) this.options.platform.keepAwake.release().catch((err: unknown) => console.warn('Could not release the screen.', err));
     this.listener.dispose();
     this.unsubscribeSpeech();
-    this.options.speech.cancel();
+    this.options.platform.speech.cancel();
     this.listeners.clear();
   }
 
@@ -349,7 +348,7 @@ export class TutorEngine {
   }
 
   private say(text: string, interrupt: boolean): void {
-    this.options.speech.say(text, interrupt);
+    this.options.platform.speech.say(text, interrupt);
   }
 
   // ------------------------------------------------------------------ hits: photo and coach
