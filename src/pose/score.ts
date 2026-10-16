@@ -3,7 +3,7 @@ import { FACING_CHECKS, POSE_SPECS, resolveSide } from './spec';
 import type { Band, Check, CheckResult, Cue, Facing, Metrics, PoseId, PoseScore, PoseSpec } from './types';
 
 /** A pose gets a score only when the measurable checks carry at least this share of its total weight. */
-export const MIN_MEASURED_WEIGHT = 0.5;
+const MIN_MEASURED_WEIGHT = 0.5;
 
 /**
  * Distance outside a band at which a check scores 0: half a band width. An open side counts as the closed side
@@ -76,7 +76,7 @@ export function scorePose(spec: PoseSpec, metrics: Metrics, facing: Facing | und
   return { pose: spec.id, score, facing, results, faults };
 }
 
-export interface CallScore {
+interface CallScore {
   readonly variant: PoseSpec;
   readonly result: PoseScore;
 }

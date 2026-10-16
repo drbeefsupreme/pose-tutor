@@ -8,13 +8,13 @@ import type { Summary } from './mode';
 
 export const BEST_KEY = 'posing-judge-best';
 
-export interface PoseBest {
+interface PoseBest {
   readonly score: number;
   /** Fastest hit; undefined until the pose was hit. */
   readonly timeMs: number | undefined;
 }
 
-export interface JudgeBest {
+interface JudgeBest {
   readonly round: { readonly meanScore: number; readonly at: string } | undefined;
   readonly poses: Partial<Record<PoseId, PoseBest>>;
 }

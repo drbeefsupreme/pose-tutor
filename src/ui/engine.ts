@@ -34,7 +34,7 @@ export interface RunSpec {
 /** The relaxed-front baseline for this tutor session: measured, skipped, or not taken yet. */
 export type SessionCalibration = Calibration | 'skipped' | undefined;
 
-export type CameraState =
+type CameraState =
   | { readonly kind: 'starting' }
   | { readonly kind: 'live'; readonly delegate: Delegate }
   | { readonly kind: 'failed'; readonly failure: CameraFailure | 'tracker'; readonly message: string };
@@ -103,7 +103,7 @@ function startRun(spec: RunSpec, now: number): StartedDrill {
   }
 }
 
-export interface EngineOptions {
+interface EngineOptions {
   readonly spec: RunSpec;
   readonly settings: TutorSettings;
   readonly calibration: SessionCalibration;

@@ -28,7 +28,7 @@ function address(hex: string): string {
 }
 
 /** The remote addresses of `uid`'s sockets in /proc/net tables, without unconnected and loopback sockets. */
-export function remoteAddresses(tables: string, uid: number): string[] {
+function remoteAddresses(tables: string, uid: number): string[] {
   return tables.split('\n').flatMap((line) => {
     const fields = line.trim().split(/\s+/);
     if (!/^\d+:$/.test(fields[0] ?? '') || Number(fields[7]) !== uid) return [];

@@ -15,7 +15,7 @@ const MODEL = 'gemini-nano';
 const GENERATE = { temperature: 0.2, maxOutputTokens: 256 } as const;
 const SELF_TEST_POSE = POSE_SPECS.sideChest[0].name;
 
-export interface DeviceCoachDeps {
+interface DeviceCoachDeps {
   readonly coach: TutorCoachPlugin;
   readonly secrets: TutorSecretsPlugin;
   /** Native HTTP for the jev call. */

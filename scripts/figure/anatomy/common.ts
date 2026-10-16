@@ -54,7 +54,7 @@ const cone = (a: BPt, b: BPt, ra: number, rb: number): CorePrim => ({ kind: 'con
 
 export { P, B, ell, cone, arm, fore, armDir, foreDir, limb, S, E, W, ARM, FORE };
 
-export interface RegionModule { muscles: MuscleDef[]; cores: CoreDef[]; veins: VeinDef[]; fat: FatDeposit[] }
+interface RegionModule { muscles: MuscleDef[]; cores: CoreDef[]; veins: VeinDef[]; fat: FatDeposit[] }
 
 /** Scales muscle belly cross-sections per region (centerlines unchanged) and returns the module. */
 export function regionModule(m: RegionModule, scale: Partial<Record<Region, number>>): RegionModule {

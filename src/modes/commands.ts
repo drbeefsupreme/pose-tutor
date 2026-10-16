@@ -14,14 +14,14 @@ export const COMMAND_OPTIONS = {
 
 export type Command = keyof typeof COMMAND_OPTIONS;
 
-export const MIN_CONFIDENCE = 0.7;
+const MIN_CONFIDENCE = 0.7;
 
 /** Jev's answer, or `unavailable` when the app could not ask jev (no key stored, offline, an error). */
 export type IntentReply =
   | { readonly kind: 'answer'; readonly choice: string; readonly confidence: number }
   | { readonly kind: 'unavailable' };
 
-export interface Decision {
+interface Decision {
   /** Undefined when nothing matched: the phrase is ignored. */
   readonly command: Command | undefined;
   readonly via: 'jev' | 'keywords';

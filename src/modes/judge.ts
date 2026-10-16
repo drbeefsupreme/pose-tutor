@@ -38,7 +38,7 @@ export const JUDGE_CALLS: Record<PoseId, string> = {
   mostMuscular: 'Most muscular.',
 };
 
-export interface JudgeConfig {
+interface JudgeConfig {
   readonly order: readonly PoseId[];
   /** Time to hit each call. */
   readonly limitMs: number;
@@ -56,7 +56,7 @@ export interface CallResult {
   readonly timeMs: number;
 }
 
-export interface JudgeState {
+interface JudgeState {
   readonly results: readonly CallResult[];
   readonly stage:
     | { readonly kind: 'call'; readonly since: number; readonly session: SessionState; readonly best: number | undefined }
@@ -65,7 +65,7 @@ export interface JudgeState {
 }
 
 /** Mean over the calls made; a call without a score counts 0. */
-export function judgeSummary(results: readonly CallResult[], total: number): Extract<Summary, { mode: 'judge' }> {
+function judgeSummary(results: readonly CallResult[], total: number): Extract<Summary, { mode: 'judge' }> {
   const meanScore = results.length === 0 ? 0 : results.reduce((sum, r) => sum + (r.score ?? 0), 0) / results.length;
   return { mode: 'judge', calls: results, complete: results.length === total, meanScore };
 }

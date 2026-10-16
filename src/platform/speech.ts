@@ -23,7 +23,7 @@ export interface SpeechEngine {
 export type SpeechStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 /** `spoken`: handed to the engine now. `queued`: waits for the sentence in flight. */
-export type SayResult = 'spoken' | 'queued' | 'muted';
+type SayResult = 'spoken' | 'queued' | 'muted';
 
 const VOICE_KEY = 'pose-tutor-voice';
 const MUTED_KEY = 'pose-tutor-muted';

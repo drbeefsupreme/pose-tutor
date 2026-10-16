@@ -7,12 +7,12 @@ import type { Mode } from './mode';
 // arm, on the same side of the screen as in the mirrored webcam). A 2D retarget from the front view: each limb
 // segment's angle in the image plane becomes a rotation in the figure's frontal plane. Nothing is scored.
 
-export type Segment = 'upperarm' | 'forearm' | 'thigh' | 'shin';
+type Segment = 'upperarm' | 'forearm' | 'thigh' | 'shin';
 type FigureSide = 'L' | 'R';
-export type SegmentKey = `${Segment}${FigureSide}`;
+type SegmentKey = `${Segment}${FigureSide}`;
 
 /** Segment angles in degrees from straight down, positive away from the body's midline. */
-export type LimbAngles = Readonly<Record<SegmentKey, number>>;
+type LimbAngles = Readonly<Record<SegmentKey, number>>;
 
 /** Left-side joints of the figure's rest skeleton (x outward, y up), from scripts/figure/skeleton.ts JOINTS. */
 const REST_JOINTS = {
@@ -99,7 +99,7 @@ export function mirrorFigure(angles: LimbAngles): FigurePose {
   return { yaw: 0, bones };
 }
 
-export interface MirrorState {
+interface MirrorState {
   readonly angles: LimbAngles;
   readonly stopped: boolean;
 }

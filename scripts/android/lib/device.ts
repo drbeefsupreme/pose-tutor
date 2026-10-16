@@ -75,9 +75,9 @@ const GPU_MODES = {
   swiftshader: { flag: 'swiftshader_indirect', env: {} },
   host: { flag: 'host', env: { DISPLAY: process.env.DISPLAY ?? ':0' } },
 } as const;
-export type GpuMode = keyof typeof GPU_MODES;
+type GpuMode = keyof typeof GPU_MODES;
 
-export interface EmulatorOptions {
+interface EmulatorOptions {
   /** The front camera: 'none', 'emulated' or 'videofile:<path>'. */
   readonly camera: string;
   readonly gpu: GpuMode;

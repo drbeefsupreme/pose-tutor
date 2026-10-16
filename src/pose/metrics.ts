@@ -18,7 +18,7 @@ export interface Calibration {
   readonly earDrop: number;
 }
 
-export interface MeasureOptions {
+interface MeasureOptions {
   readonly calibration?: Calibration;
 }
 

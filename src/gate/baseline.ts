@@ -8,7 +8,7 @@ import type { DetectMode } from './page';
 /** An own-pose score may move this many points from the baseline. */
 export const MAX_DIFF = 5;
 
-export interface BaselineCase {
+interface BaselineCase {
   readonly id: string;
   readonly pose: PoseId;
   /** Own-pose score; null when the call gave no score. */
@@ -44,7 +44,7 @@ export function toBaseline(run: GateRun, failures: readonly string[], device: st
   };
 }
 
-export interface CaseComparison {
+interface CaseComparison {
   readonly id: string;
   readonly baseline: BaselineCase;
   /** The run's own score and top cue; undefined when the run has no such case. */

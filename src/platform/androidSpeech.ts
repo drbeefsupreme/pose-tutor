@@ -12,7 +12,7 @@ import type { Line, SpeechEngine, Voice } from './speech';
 
 export type TtsPlugin = Pick<TextToSpeechPlugin, 'speak' | 'stop' | 'getSupportedVoices'>;
 
-export type SpeechEnd = 'done' | 'error' | 'cancelled';
+type SpeechEnd = 'done' | 'error' | 'cancelled';
 
 /** One spoken line, for the test harness and logcat. Times are Date.now() milliseconds. */
 export interface SpeechLogEntry {
@@ -41,7 +41,7 @@ const VOICE_RETRY_MS = 1000;
 const VOICE_TRIES = 10;
 
 /** The English voices. Settings names them by their engine id, because the plugin names every en-US voice the same. */
-export function englishVoices(all: readonly PluginVoice[]): NativeVoice[] {
+function englishVoices(all: readonly PluginVoice[]): NativeVoice[] {
   return all.flatMap((v, index) =>
     v.lang.toLowerCase().startsWith('en') ? [{ voiceURI: v.voiceURI, lang: v.lang, localService: v.localService, index }] : [],
   );

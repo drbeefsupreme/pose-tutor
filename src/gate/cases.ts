@@ -2,7 +2,7 @@ import { FIGURE_POSES } from '../figure/figurePoses';
 import type { AxisAngle, BoneKey, FigurePose, PoseId } from '../pose/types';
 
 /** A figure pose with one known fault, and the correction the tutor must give first for it. */
-export interface FaultCase {
+interface FaultCase {
   readonly id: string;
   readonly label: string;
   readonly pose: PoseId;

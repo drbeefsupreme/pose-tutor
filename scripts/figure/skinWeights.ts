@@ -3,7 +3,7 @@
 import type { Field } from './field';
 import { SKIN_BONES } from './skeleton';
 
-export interface SkinWeights {
+interface SkinWeights {
   /** Four skin slots per vertex, strongest first. */
   index: Uint8Array;
   /** Four weights per vertex in 1/255 steps; every vertex sums to 255. */

@@ -13,7 +13,7 @@ export const HIT_SCORE = SCHEDULER.hitScore;
 /** A clearly different pose must score below this. */
 export const DIFFERENT_MAX = 60;
 
-export type ArmClass = 'overhead' | 'down';
+type ArmClass = 'overhead' | 'down';
 
 /** Where the arms are, by pose: elbows at or above the shoulders, or below them. In judges' call order. */
 export const ARMS: { readonly [P in PoseId]: ArmClass } = {
@@ -102,13 +102,13 @@ export interface GateOutput {
   readonly trace: { readonly calibration: Calibration | null; readonly landmarks: Readonly<Record<string, PoseLandmarks | null>> };
 }
 
-export interface CrossScore {
+interface CrossScore {
   readonly rendered: PoseId;
   readonly called: PoseId;
   readonly score: number;
 }
 
-export interface Verdict {
+interface Verdict {
   readonly failures: readonly string[];
   /** Same facing and arm class, scoring at least DIFFERENT_MAX: 2D look-alikes, not failures. */
   readonly lookAlikes: readonly CrossScore[];

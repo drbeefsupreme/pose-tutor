@@ -20,7 +20,7 @@ export interface Hit {
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
 /** The faults that have a spoken cue, most important first. */
-export function hitFaults(score: PoseScore | undefined): PhotoFault[] {
+function hitFaults(score: PoseScore | undefined): PhotoFault[] {
   return (score?.faults ?? []).flatMap((f) => {
     const cue = faultCue(f);
     if (!cue) return [];

@@ -5,7 +5,7 @@ import { inView } from '../pose/session';
 // The relaxed-front capture at the start of a tutor session. The athlete stands relaxed, facing the camera, in
 // full view; after `steadyMs` of such frames the baseline is the mean of their calibrations.
 
-export const CALIBRATION_STEADY_MS = 1500;
+const CALIBRATION_STEADY_MS = 1500;
 
 export interface Capture {
   /** When the current run of usable frames began. */
@@ -15,7 +15,7 @@ export interface Capture {
 
 export const NEW_CAPTURE: Capture = { since: undefined, samples: [] };
 
-export type CaptureStep =
+type CaptureStep =
   | { readonly kind: 'waiting'; readonly capture: Capture; readonly progress: number }
   | { readonly kind: 'captured'; readonly calibration: Calibration };
 

@@ -20,7 +20,7 @@ interface Stats {
   readonly last: number;
 }
 
-export interface HoldState {
+interface HoldState {
   readonly startedAt: number;
   readonly resets: number;
   readonly stage:

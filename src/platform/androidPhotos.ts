@@ -61,7 +61,7 @@ export function parseSidecar(id: PhotoId, text: string): PhotoMeta | undefined {
 }
 
 /** Newest first. */
-export function newestFirst(photos: readonly PhotoMeta[]): PhotoMeta[] {
+function newestFirst(photos: readonly PhotoMeta[]): PhotoMeta[] {
   return photos.toSorted((a, b) => Date.parse(b.takenAt) - Date.parse(a.takenAt));
 }
 

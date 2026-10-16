@@ -7,7 +7,7 @@
 import type { PluginListenerHandle } from '@capacitor/core';
 import type { Delegate } from './types';
 
-export interface NativeLandmark {
+interface NativeLandmark {
   readonly x: number;
   readonly y: number;
   readonly z: number;
@@ -32,7 +32,7 @@ export interface PreviewRect {
   readonly height: number;
 }
 
-export interface PoseStartOptions {
+interface PoseStartOptions {
   readonly rect: PreviewRect;
   /** window.devicePixelRatio, so native can convert CSS pixels to device pixels. */
   readonly devicePixelRatio: number;

@@ -18,7 +18,7 @@ export const JOINTS: Record<BoneName, V3> = {
   foot: [0.14, 0.085, -0.02],
 };
 
-export const PARENT: Record<BoneName, BoneName | null> = {
+const PARENT: Record<BoneName, BoneName | null> = {
   pelvis: null, lumbar: 'pelvis', chest: 'lumbar', neck: 'chest', head: 'neck',
   scap: 'chest', upperarm: 'scap', forearm: 'upperarm', hand: 'forearm',
   thigh: 'pelvis', shin: 'thigh', foot: 'shin',

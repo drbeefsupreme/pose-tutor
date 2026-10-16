@@ -5,7 +5,7 @@ import { Rig, type PoseState, type RigManifest } from './rig';
 import { createSkinMaterial, type BoneUniforms } from './skinMaterial';
 
 /** 'stage': the app's overhead stage light. 'neutral': the soft studio light that the tracking gate renders with. */
-export type Lighting = 'stage' | 'neutral';
+type Lighting = 'stage' | 'neutral';
 
 /** The baked figure (public/figure, npm run figure). */
 const MODEL = 'figure/relaxed';

@@ -47,7 +47,7 @@ const BLAZEPOSE = [
   'rightFootIndex',
 ] as const;
 
-export type LandmarkName = (typeof BLAZEPOSE)[number];
+type LandmarkName = (typeof BLAZEPOSE)[number];
 type Point = readonly [number, number];
 
 /** A hand-built figure: named points in a square image, all visible. */

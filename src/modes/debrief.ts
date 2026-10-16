@@ -6,7 +6,7 @@ export interface DebriefQueue<J> {
   readonly waiting: J | undefined;
 }
 
-export interface QueueStep<J> {
+interface QueueStep<J> {
   readonly queue: DebriefQueue<J>;
   /** The job to start now, if any. */
   readonly start: J | undefined;

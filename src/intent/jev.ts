@@ -9,7 +9,7 @@ const INSTRUCTIONS =
   'The `transcript` is what speech recognition heard while a user practiced bodybuilding poses in a training app. ' +
   'Which command did the user mean?';
 
-export interface IntentAnswer {
+interface IntentAnswer {
   readonly choice: string;
   readonly confidence: number;
 }

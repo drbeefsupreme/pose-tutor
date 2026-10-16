@@ -6,7 +6,7 @@ import type { Check, PoseScore } from './types';
 // The cue scheduler: one pose call from the first frame to the hit. It owns what is said and when, so corrections
 // come one at a time, most important first. It is a pure reducer over (state, sighting, time).
 
-export interface SchedulerConfig {
+interface SchedulerConfig {
   /** Score at which the pose counts as hit and the hold starts. */
   readonly hitScore: number;
   /** The hold survives dips down to `hitScore - holdSlack`, so a score hovering at the line does not restart it. */
@@ -80,7 +80,7 @@ interface HoldStats {
   readonly sumSq: number;
 }
 
-export type Phase =
+type Phase =
   | { readonly kind: 'framing'; readonly reason: FramingReason }
   | { readonly kind: 'correcting' }
   | {
@@ -104,7 +104,7 @@ export interface SessionState {
   readonly praises: number;
 }
 
-export interface Advance {
+interface Advance {
   readonly state: SessionState;
   readonly events: readonly SessionEvent[];
 }

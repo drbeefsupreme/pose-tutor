@@ -6,7 +6,7 @@
 // system recognizer with EXTRA_PREFER_OFFLINE; when that has no language pack either, the system recognizer online.
 
 /** Which recognizer made a result, from most to least private. */
-export type RecognizerMode = 'onDevice' | 'preferOffline' | 'online';
+type RecognizerMode = 'onDevice' | 'preferOffline' | 'online';
 
 export interface ListenResult {
   /** The best final phrase, trimmed; null when the recognizer heard no words. */
