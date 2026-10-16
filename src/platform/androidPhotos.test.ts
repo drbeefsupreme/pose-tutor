@@ -53,7 +53,7 @@ describe('the photo folder index', () => {
     expect(sidecarIds([`${ID_A}.json`, `${ID_A}.jpg`, `${ID_B}.webp`, 'notes.json', `${ID_C}.json.tmp`, `${ID_C}.JSON`])).toEqual([ID_A]);
   });
 
-  it('reads a sidecar of the desktop format and refuses broken or foreign ones', () => {
+  it('reads a PhotoMeta sidecar and refuses broken or foreign ones', () => {
     const meta = { id: ID_A, pose: 'sideChest', takenAt: '2026-10-10T10:00:00.000Z', score: 87.5, faults: [], image: 'jpeg', mode: 'hold' };
     expect(parseSidecar(ID_A as PhotoId, JSON.stringify(meta))).toEqual(meta);
     expect(parseSidecar(ID_B as PhotoId, JSON.stringify(meta))).toBeUndefined();

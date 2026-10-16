@@ -3,7 +3,7 @@ import { field, storedObject } from './stored';
 import { JUDGE_ORDER, type CallResult } from './judge';
 import type { Summary } from './mode';
 
-export const BEST_KEY = 'posing-judge-best';
+export const BEST_KEY = 'pose-tutor-best';
 
 interface PoseBest {
   readonly score: number;
