@@ -45,7 +45,7 @@ function axisAngle(ax: number, ay: number, az: number, deg: number): number[] {
 }
 
 function mul(a: M, b: M): M {
-  const r = new Array(12);
+  const r: M = Array.from({ length: 12 }, () => 0);
   for (let i = 0; i < 3; i++) {
     for (let j = 0; j < 3; j++) r[i * 4 + j] = a[i * 4] * b[j] + a[i * 4 + 1] * b[4 + j] + a[i * 4 + 2] * b[8 + j];
     r[i * 4 + 3] = a[i * 4] * b[3] + a[i * 4 + 1] * b[7] + a[i * 4 + 2] * b[11] + a[i * 4 + 3];
