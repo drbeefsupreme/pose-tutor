@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { platform } from '../platform/android';
 import { JOINTS, type PoseLandmarks, type SidedJoint } from '../pose/landmarks';
+import { MIN_VISIBILITY } from '../pose/metrics';
 import { IconEye, IconLayers, IconSwap } from '../ui/Icons';
 import { formatDate, scoreTone } from './format';
 import type { PhotoMeta } from './types';
@@ -25,7 +26,6 @@ const BONES: readonly (readonly [number, number])[] = [
   ...LIMB_BONES.flatMap(([a, b]) => [[JOINTS[a].left, JOINTS[b].left], [JOINTS[a].right, JOINTS[b].right]] as const),
 ];
 const BONE_JOINTS = [...new Set(BONES.flat())];
-const MIN_VISIBILITY = 0.5;
 const DAY_MS = 86_400_000;
 
 function Skeleton({ landmarks, slot }: { landmarks: PoseLandmarks; slot: Slot }) {
