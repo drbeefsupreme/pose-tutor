@@ -25,7 +25,7 @@ function fakeTts() {
 }
 
 async function tick() {
-  for (let i = 0; i < 10; i++) await null;
+  for (let i = 0; i < 10; i++) await Promise.resolve();
 }
 
 async function engine() {
