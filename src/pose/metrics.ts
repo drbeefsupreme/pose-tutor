@@ -1,5 +1,5 @@
 import { JOINTS, NOSE, type PoseLandmarks } from './landmarks';
-import type { BodySide, Facing, MetricId, Metrics } from './types';
+import type { BodySide, Facing, MetricId, MetricSide, Metrics } from './types';
 
 // Definitions: "Metric definitions" in docs/pose-spec.md. Coordinates are image coordinates with
 // x scaled by the aspect ratio and y pointing down; heights are positive above the reference point.
@@ -21,6 +21,30 @@ export interface Calibration {
 interface MeasureOptions {
   readonly calibration?: Calibration;
 }
+
+const METRIC_IDS: { readonly [M in MetricId]: true } = {
+  hipWidth: true,
+  shoulderWidth: true,
+  twist: true,
+  stanceRatio: true,
+  stagger: true,
+  kneeFlex: true,
+  heelLift: true,
+  abduction: true,
+  elbowFlex: true,
+  elbowHeight: true,
+  wristHeight: true,
+  wristVsNose: true,
+  forearmAngle: true,
+  elbowSpan: true,
+  wristGap: true,
+  headYaw: true,
+  shrug: true,
+  wristVis: true,
+};
+export const isMetricId = (id: string): id is MetricId => Object.hasOwn(METRIC_IDS, id);
+const METRIC_SIDES: { readonly [S in MetricSide]: true } = { left: true, right: true, near: true, far: true };
+export const isMetricSide = (side: string): side is MetricSide => Object.hasOwn(METRIC_SIDES, side);
 
 export function metricKey(metric: MetricId, side?: BodySide): keyof Metrics {
   return side === undefined ? metric : `${metric}.${side}`;

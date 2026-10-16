@@ -1,8 +1,10 @@
 // One folder with `<id>.jpg|.webp` and its `<id>.json` PhotoMeta sidecar per photo. The image is written first and
 // the sidecar last, so a photo exists exactly when its sidecar does.
 
+import { LANDMARK_COUNT, type Landmark, type PoseLandmarks } from '../pose/landmarks';
+import { isMetricId, isMetricSide } from '../pose/metrics';
 import { POSE_LABELS } from '../progress/format';
-import type { PhotoId, PhotoImageType, PhotoMeta, SavePhotoRequest } from '../progress/types';
+import type { PhotoFault, PhotoId, PhotoImageType, PhotoMeta, SavePhotoRequest } from '../progress/types';
 import type { PoseId } from '../pose/types';
 import type { PhotoStore } from './types';
 
@@ -30,6 +32,29 @@ export function sidecarIds(names: readonly string[]): PhotoId[] {
   });
 }
 
+type JsonObject = { readonly [key: string]: unknown };
+
+const isObject = (value: unknown): value is JsonObject => typeof value === 'object' && value !== null && !Array.isArray(value);
+const isPoseId = (value: unknown): value is PoseId => typeof value === 'string' && Object.hasOwn(POSE_LABELS, value);
+const isImageType = (value: unknown): value is PhotoImageType => typeof value === 'string' && Object.hasOwn(EXTENSION, value);
+
+const isFault = (value: unknown): value is PhotoFault =>
+  isObject(value) &&
+  typeof value.metric === 'string' &&
+  isMetricId(value.metric) &&
+  (value.side === undefined || (typeof value.side === 'string' && isMetricSide(value.side))) &&
+  typeof value.cue === 'string';
+
+const isLandmark = (value: unknown): value is Landmark =>
+  isObject(value) && typeof value.x === 'number' && typeof value.y === 'number' && typeof value.visibility === 'number';
+
+const isLandmarks = (value: unknown): value is PoseLandmarks =>
+  isObject(value) &&
+  typeof value.aspect === 'number' &&
+  Array.isArray(value.points) &&
+  value.points.length === LANDMARK_COUNT &&
+  value.points.every(isLandmark);
+
 export function parseSidecar(id: PhotoId, text: string): PhotoMeta | undefined {
   let json: unknown;
   try {
@@ -37,19 +62,12 @@ export function parseSidecar(id: PhotoId, text: string): PhotoMeta | undefined {
   } catch {
     return undefined;
   }
-  if (typeof json !== 'object' || json === null) return undefined;
-  const meta: Partial<Record<keyof PhotoMeta, unknown>> = json;
-  const valid =
-    meta.id === id &&
-    typeof meta.pose === 'string' &&
-    Object.hasOwn(POSE_LABELS, meta.pose) &&
-    typeof meta.takenAt === 'string' &&
-    !Number.isNaN(Date.parse(meta.takenAt)) &&
-    typeof meta.score === 'number' &&
-    Array.isArray(meta.faults) &&
-    typeof meta.image === 'string' &&
-    Object.hasOwn(EXTENSION, meta.image);
-  return valid ? (json as PhotoMeta) : undefined;
+  if (!isObject(json) || json.id !== id) return undefined;
+  const { pose, takenAt, score, faults, landmarks, mode, image } = json;
+  if (!isPoseId(pose) || typeof takenAt !== 'string' || Number.isNaN(Date.parse(takenAt)) || typeof score !== 'number') return undefined;
+  if (!Array.isArray(faults) || !faults.every(isFault) || !isImageType(image)) return undefined;
+  if ((landmarks !== undefined && !isLandmarks(landmarks)) || (mode !== undefined && typeof mode !== 'string')) return undefined;
+  return { id, pose, takenAt, score, faults, landmarks, mode, image };
 }
 
 function newestFirst(photos: readonly PhotoMeta[]): PhotoMeta[] {
@@ -78,8 +96,8 @@ export function folderPhotoStore(
 
     async save(req: SavePhotoRequest): Promise<PhotoMeta> {
       const head = DATA_URL_HEAD.exec(req.imageDataUrl);
-      if (!head) throw new Error('the photo must be a base64 jpeg or webp data URL');
-      const image = head[1] as PhotoImageType;
+      const image = head?.[1];
+      if (!head || !isImageType(image)) throw new Error('the photo must be a base64 jpeg or webp data URL');
       const id = newId() as PhotoId;
       const { imageDataUrl, ...fields } = req;
       const meta: PhotoMeta = { id, ...fields, takenAt: now().toISOString(), image };

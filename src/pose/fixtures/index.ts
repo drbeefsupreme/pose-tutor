@@ -1,7 +1,7 @@
 import { poseLandmarks, type Landmark, type PoseLandmarks } from '../landmarks';
-import { metricKey } from '../metrics';
+import { isMetricId, metricKey } from '../metrics';
 import { FACING_CHECKS, POSE_SPECS } from '../spec';
-import type { Facing, MetricId, Metrics, PoseId } from '../types';
+import type { Facing, Metrics, PoseId } from '../types';
 import backDoubleBiceps from './back-double-biceps.json';
 import frontDoubleBicepsElbowsDropped from './front-double-biceps-elbows-dropped.json';
 import frontDoubleBiceps from './front-double-biceps.json';
@@ -131,27 +131,6 @@ export interface RefPhoto {
   readonly measured: Metrics;
 }
 
-const METRIC_IDS: { readonly [M in MetricId]: true } = {
-  hipWidth: true,
-  shoulderWidth: true,
-  twist: true,
-  stanceRatio: true,
-  stagger: true,
-  kneeFlex: true,
-  heelLift: true,
-  abduction: true,
-  elbowFlex: true,
-  elbowHeight: true,
-  wristHeight: true,
-  wristVsNose: true,
-  forearmAngle: true,
-  elbowSpan: true,
-  wristGap: true,
-  headYaw: true,
-  shrug: true,
-  wristVis: true,
-};
-const isMetricId = (id: string): id is MetricId => Object.hasOwn(METRIC_IDS, id);
 const isPoseId = (id: string): id is PoseId => Object.hasOwn(POSE_SPECS, id);
 const isFacing = (id: string): id is Facing => Object.hasOwn(FACING_CHECKS, id);
 
