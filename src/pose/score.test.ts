@@ -138,7 +138,7 @@ describe('the 26 reference photos', () => {
   it('score at least 80 for their own pose, apart from the one whose elbows and legs read as hidden', () => {
     const own = REFS.map((ref) => [ref.id, scoreRef(ref, ref.pose).result.score] as const);
     expect(own.filter(([, score]) => score === undefined).map(([id]) => id)).toEqual(['ifbb_bb_at']);
-    for (const [id, score] of own) if (score !== undefined) expect([id, score >= 80]).toEqual([id, true]);
+    expect(own.filter(([, score]) => score !== undefined && score < 80)).toEqual([]);
   });
 
   it('pick the variant the athlete shows', () => {
