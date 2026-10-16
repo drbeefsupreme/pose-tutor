@@ -1,8 +1,8 @@
+import { DIFFERENT_MAX } from '../pose/score';
 import { POSE_SPECS } from '../pose/spec';
 import type { PoseId } from '../pose/types';
 import {
   ARMS,
-  DIFFERENT_MAX,
   HIT_SCORE,
   POSE_IDS,
   clearlyDifferent,

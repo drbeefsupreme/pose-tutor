@@ -5,6 +5,9 @@ import type { Band, Check, CheckResult, Cue, Facing, Metrics, PoseId, PoseScore,
 /** A pose gets a score only when the measurable checks carry at least this share of its total weight. */
 const MIN_MEASURED_WEIGHT = 0.5;
 
+/** A clearly different pose must score below this. */
+export const DIFFERENT_MAX = 60;
+
 /**
  * Distance outside a band at which a check scores 0: half a band width. An open side counts as the closed side
  * mirrored about the target, so `atLeast(2.35, 2.15)` falls to 0 at 1.95. With a full band width, both elbows

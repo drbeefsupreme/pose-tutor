@@ -1,4 +1,5 @@
-import { DIFFERENT_MAX, HIT_SCORE } from '../gate/criteria';
+import { DIFFERENT_MAX } from '../pose/score';
+import { SCHEDULER } from '../pose/session';
 import type { PoseId } from '../pose/types';
 
 /** Short pose names. Display order follows prejudging: quarter turns, then the mandatory poses. */
@@ -22,4 +23,4 @@ const SHORT_DATE = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: '
 
 export const formatDate = (iso: string, short = false): string => (short ? SHORT_DATE : DATE).format(new Date(iso));
 
-export const scoreTone = (score: number): 'good' | 'warn' | 'bad' => (score >= HIT_SCORE ? 'good' : score >= DIFFERENT_MAX ? 'warn' : 'bad');
+export const scoreTone = (score: number): 'good' | 'warn' | 'bad' => (score >= SCHEDULER.hitScore ? 'good' : score >= DIFFERENT_MAX ? 'warn' : 'bad');

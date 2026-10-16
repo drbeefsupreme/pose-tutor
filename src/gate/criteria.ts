@@ -1,14 +1,13 @@
 import type { Delegate } from '../platform/types';
 import type { PoseLandmarks } from '../pose/landmarks';
 import type { Calibration } from '../pose/metrics';
+import { DIFFERENT_MAX } from '../pose/score';
 import { SCHEDULER } from '../pose/session';
 import { POSE_SPECS } from '../pose/spec';
 import type { Facing, PoseId } from '../pose/types';
 
 /** An own-pose score at least this high is a hit, as in the live session. */
 export const HIT_SCORE = SCHEDULER.hitScore;
-/** A clearly different pose must score below this. */
-export const DIFFERENT_MAX = 60;
 
 type ArmClass = 'overhead' | 'down';
 
