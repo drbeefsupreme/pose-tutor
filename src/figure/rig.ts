@@ -44,17 +44,36 @@ function rotate(q: ArrayLike<number>, iq: number, x: number, y: number, z: numbe
   out[io + 2] = z + 2 * (qx * cy - qy * cx);
 }
 
+function conj(q: ArrayLike<number>, iq: number, out: Float64Array, io: number): void {
+  out[io] = -q[iq]; out[io + 1] = -q[iq + 1]; out[io + 2] = -q[iq + 2]; out[io + 3] = q[iq + 3];
+}
+
+function translationOfRotationAbout(q: ArrayLike<number>, iq: number, [jx, jy, jz]: Vec3, out: Float64Array): void {
+  rotate(q, iq, jx, jy, jz, out, 0);
+  out[0] = jx - out[0]; out[1] = jy - out[1]; out[2] = jz - out[2];
+}
+
+function dqFromRotationTranslation(r: ArrayLike<number>, tx: number, ty: number, tz: number, real: Float32Array, dual: Float32Array, o: number): void {
+  const rx = r[0], ry = r[1], rz = r[2], rw = r[3];
+  real[o] = rx; real[o + 1] = ry; real[o + 2] = rz; real[o + 3] = rw;
+  dual[o] = 0.5 * (tx * rw + ty * rz - tz * ry);
+  dual[o + 1] = 0.5 * (-tx * rz + ty * rw + tz * rx);
+  dual[o + 2] = 0.5 * (tx * ry - ty * rx + tz * rw);
+  dual[o + 3] = -0.5 * (tx * rx + ty * ry + tz * rz);
+}
+
 export class Rig {
   readonly bones: readonly BoneKey[];
   /** The pose the mesh was baked in; skinning it gives identity transforms. */
   readonly bind: PoseState;
   private readonly m: RigManifest;
   private readonly restFloor: number;
-  private readonly wq: Float64Array;
-  private readonly wt: Float64Array;
-  private readonly bq: Float64Array;
-  private readonly bt: Float64Array;
+  private readonly worldQ: Float64Array;
+  private readonly worldT: Float64Array;
+  private readonly bindQ: Float64Array;
+  private readonly bindT: Float64Array;
   private readonly yq = new Float64Array(4);
+  private readonly skinQ = new Float64Array(4);
   private readonly tmp = new Float64Array(4);
 
   constructor(m: RigManifest) {
@@ -64,12 +83,12 @@ export class Rig {
     this.m = m;
     this.bones = m.bones;
     this.restFloor = Math.min(...m.contacts.map((c) => c.p[1]));
-    this.wq = new Float64Array(n * 4);
-    this.wt = new Float64Array(n * 3);
+    this.worldQ = new Float64Array(n * 4);
+    this.worldT = new Float64Array(n * 3);
     this.bind = this.compile(m.bind);
     this.solve(this.bind);
-    this.bq = this.wq.slice();
-    this.bt = this.wt.slice();
+    this.bindQ = this.worldQ.slice();
+    this.bindT = this.worldT.slice();
   }
 
   /** Composes each bone's axis-angle list (world-rest axes, first rotation first) into a quaternion. */
@@ -128,25 +147,19 @@ export class Rig {
    */
   skin(s: PoseState, real: Float32Array, dual: Float32Array): void {
     this.solve(s);
-    const { wq, wt, bq, bt, tmp } = this;
+    const { worldQ, worldT, bindQ, bindT, skinQ, tmp } = this;
     const n = this.bones.length;
     for (let i = 0; i < n; i++) {
       const o = i * 4;
-      tmp[0] = -bq[o]; tmp[1] = -bq[o + 1]; tmp[2] = -bq[o + 2]; tmp[3] = bq[o + 3];
-      mul(wq, o, tmp, 0, tmp, 0);
+      conj(bindQ, o, skinQ, 0);
+      mul(worldQ, o, skinQ, 0, skinQ, 0);
       // Keep neighbors in one hemisphere so the shader's blend does not cancel.
       const p = this.m.parent[i];
       const ref = p < 0 ? -1 : p * 4;
-      const d = ref < 0 ? tmp[3] : tmp[0] * real[ref] + tmp[1] * real[ref + 1] + tmp[2] * real[ref + 2] + tmp[3] * real[ref + 3];
-      if (d < 0) { tmp[0] = -tmp[0]; tmp[1] = -tmp[1]; tmp[2] = -tmp[2]; tmp[3] = -tmp[3]; }
-      const rx = tmp[0], ry = tmp[1], rz = tmp[2], rw = tmp[3];
-      rotate(tmp, 0, bt[i * 3], bt[i * 3 + 1], bt[i * 3 + 2], tmp, 0);
-      const tx = wt[i * 3] - tmp[0], ty = wt[i * 3 + 1] - tmp[1], tz = wt[i * 3 + 2] - tmp[2];
-      real[o] = rx; real[o + 1] = ry; real[o + 2] = rz; real[o + 3] = rw;
-      dual[o] = 0.5 * (tx * rw + ty * rz - tz * ry);
-      dual[o + 1] = 0.5 * (-tx * rz + ty * rw + tz * rx);
-      dual[o + 2] = 0.5 * (tx * ry - ty * rx + tz * rw);
-      dual[o + 3] = -0.5 * (tx * rx + ty * ry + tz * rz);
+      const d = ref < 0 ? skinQ[3] : skinQ[0] * real[ref] + skinQ[1] * real[ref + 1] + skinQ[2] * real[ref + 2] + skinQ[3] * real[ref + 3];
+      if (d < 0) { skinQ[0] = -skinQ[0]; skinQ[1] = -skinQ[1]; skinQ[2] = -skinQ[2]; skinQ[3] = -skinQ[3]; }
+      rotate(skinQ, 0, bindT[i * 3], bindT[i * 3 + 1], bindT[i * 3 + 2], tmp, 0);
+      dqFromRotationTranslation(skinQ, worldT[i * 3] - tmp[0], worldT[i * 3 + 1] - tmp[1], worldT[i * 3 + 2] - tmp[2], real, dual, o);
     }
   }
 
@@ -155,8 +168,8 @@ export class Rig {
     const i = this.bones.indexOf(bone);
     if (i < 0) throw new Error(`Rig: unknown bone ${bone}`);
     this.solve(s);
-    rotate(this.wq, i * 4, p[0], p[1], p[2], this.tmp, 0);
-    return [this.tmp[0] + this.wt[i * 3], this.tmp[1] + this.wt[i * 3 + 1], this.tmp[2] + this.wt[i * 3 + 2]];
+    rotate(this.worldQ, i * 4, p[0], p[1], p[2], this.tmp, 0);
+    return [this.tmp[0] + this.worldT[i * 3], this.tmp[1] + this.worldT[i * 3 + 1], this.tmp[2] + this.worldT[i * 3 + 2]];
   }
 
   /**
@@ -165,27 +178,26 @@ export class Rig {
    * sole point sits at its rest height.
    */
   private solve(s: PoseState): void {
-    const { wq, wt, yq, tmp } = this;
+    const { worldQ, worldT, yq, tmp } = this;
     const { parent, joints, contacts } = this.m;
     const half = (-s.yaw * Math.PI) / 360;
     yq[0] = 0; yq[1] = Math.sin(half); yq[2] = 0; yq[3] = Math.cos(half);
     for (let i = 0; i < joints.length; i++) {
       const p = parent[i], o = i * 4;
-      const [jx, jy, jz] = joints[i];
-      rotate(s.q, o, jx, jy, jz, tmp, 0);
-      const pq = p < 0 ? yq : wq, po = p < 0 ? 0 : p * 4;
-      rotate(pq, po, jx - tmp[0], jy - tmp[1], jz - tmp[2], tmp, 0);
-      wt[i * 3] = tmp[0] + (p < 0 ? 0 : wt[p * 3]);
-      wt[i * 3 + 1] = tmp[1] + (p < 0 ? 0 : wt[p * 3 + 1]);
-      wt[i * 3 + 2] = tmp[2] + (p < 0 ? 0 : wt[p * 3 + 2]);
-      mul(pq, po, s.q, o, wq, o);
+      translationOfRotationAbout(s.q, o, joints[i], tmp);
+      const pq = p < 0 ? yq : worldQ, po = p < 0 ? 0 : p * 4;
+      rotate(pq, po, tmp[0], tmp[1], tmp[2], tmp, 0);
+      worldT[i * 3] = tmp[0] + (p < 0 ? 0 : worldT[p * 3]);
+      worldT[i * 3 + 1] = tmp[1] + (p < 0 ? 0 : worldT[p * 3 + 1]);
+      worldT[i * 3 + 2] = tmp[2] + (p < 0 ? 0 : worldT[p * 3 + 2]);
+      mul(pq, po, s.q, o, worldQ, o);
     }
     let low = Infinity;
     for (const c of contacts) {
-      rotate(wq, c.bone * 4, c.p[0], c.p[1], c.p[2], tmp, 0);
-      low = Math.min(low, tmp[1] + wt[c.bone * 3 + 1]);
+      rotate(worldQ, c.bone * 4, c.p[0], c.p[1], c.p[2], tmp, 0);
+      low = Math.min(low, tmp[1] + worldT[c.bone * 3 + 1]);
     }
     const lift = this.restFloor - low;
-    for (let i = 0; i < joints.length; i++) wt[i * 3 + 1] += lift;
+    for (let i = 0; i < joints.length; i++) worldT[i * 3 + 1] += lift;
   }
 }
