@@ -120,7 +120,7 @@ function RunView({ engine, onAgain, onHome }: Props & { engine: TutorEngine }) {
         <span className={`tutor-mic ${snap.listening}`} title="Voice commands">
           mic: {snap.listening}
           {(snap.listening === 'error' || snap.listening === 'denied') && snap.listenError ? ` (${snap.listenError})` : ''}
-          {snap.listenError === 'network' ? ' · this browser has no speech service; use Google Chrome' : ''}
+          {snap.listenError === 'network' ? ' · speech needs the network or an offline language pack' : ''}
         </span>
         <span className="tutor-keys hint">Space next · S skip · R repeat · W what's wrong · P pause · Esc stop</span>
       </header>
