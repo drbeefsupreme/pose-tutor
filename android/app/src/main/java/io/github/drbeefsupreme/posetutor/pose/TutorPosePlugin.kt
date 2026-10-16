@@ -21,7 +21,7 @@ private const val CAMERA = "camera"
     permissions = [Permission(strings = [Manifest.permission.CAMERA], alias = CAMERA)],
 )
 class TutorPosePlugin : Plugin() {
-    private class Request(val rect: PreviewRect, val devicePixelRatio: Double)
+    private class Request(val rect: CssPixelRect, val devicePixelRatio: Double)
 
     private val policy = DelegatePolicy()
     private lateinit var still: StillDetector
@@ -174,9 +174,9 @@ class TutorPosePlugin : Plugin() {
     private fun onMain(block: () -> Unit) = bridge.executeOnMainThread(block)
 }
 
-private fun previewRect(json: JSObject?): PreviewRect? {
+private fun previewRect(json: JSObject?): CssPixelRect? {
     if (json == null) return null
     val values = listOf("x", "y", "width", "height").map { key -> json.optDouble(key).takeUnless { it.isNaN() } ?: return null }
     val (x, y, width, height) = values
-    return PreviewRect(x, y, width, height).takeIf { width > 0 && height > 0 }
+    return CssPixelRect(x, y, width, height).takeIf { width > 0 && height > 0 }
 }

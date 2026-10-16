@@ -15,6 +15,8 @@ import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
@@ -44,7 +46,8 @@ internal class LiveDetector(
     private val onFrame: (JSObject) -> Unit,
     private val onAnswering: (Delegate) -> Unit,
     private val onUnavailable: (TrackingUnavailable) -> Unit,
-) : ImageAnalysis.Analyzer {
+) {
+    private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var landmarker: PoseLandmarker? = null
 
     @Volatile
@@ -63,13 +66,23 @@ internal class LiveDetector(
     @Volatile
     private var blankTimestamp = -1L
 
+    fun attach(analysis: ImageAnalysis) = analysis.setAnalyzer(analysisExecutor) { image -> analyze(image) }
+
     fun requestReset() = resetRequested.set(true)
 
-    override fun analyze(image: ImageProxy) {
+    fun capture(maxWidth: Int, done: (String?) -> Unit) = analysisExecutor.execute { done(jpegOfFrame(maxWidth)) }
+
+    fun close() {
+        analysisExecutor.execute(::release)
+        analysisExecutor.shutdown()
+    }
+
+    private fun analyze(image: ImageProxy) {
         image.use {
             if (unavailable) return
             val now = SystemClock.uptimeMillis()
-            if (!readyFor(now) || !gate.admit(now) || now <= lastTimestamp) return
+            restartIfStalled(now)
+            if (inFlightSince.get() != 0L || !gate.admit(now) || now <= lastTimestamp) return
             val live = landmarker ?: open() ?: return
             lastTimestamp = now
             val input = if (resetRequested.getAndSet(false)) blankLike(image).also { blankTimestamp = now } else fill(image)
@@ -82,13 +95,12 @@ internal class LiveDetector(
         }
     }
 
-    private fun readyFor(now: Long): Boolean {
+    private fun restartIfStalled(now: Long) {
         val since = inFlightSince.get()
-        if (since == 0L) return true
+        if (since == 0L) return
         val limit = if (answered.get()) STALL_MS else FIRST_ANSWER_MS
-        if (now - since < limit) return false
+        if (now - since < limit) return
         failed(IllegalStateException("no result ${now - since} ms after a ${delegate.label} detection"))
-        return true
     }
 
     /** The GPU delegate's first-detection failure reaches only logcat, so a missing answer counts as failure too. */
@@ -155,7 +167,7 @@ internal class LiveDetector(
                 .apply { eraseColor(Color.BLACK) }
                 .also { blank = it }
 
-    fun capture(maxWidth: Int): String? {
+    private fun jpegOfFrame(maxWidth: Int): String? {
         val source = frame ?: return null
         val scale = minOf(1f, maxWidth.toFloat() / source.width)
         val photo = if (scale < 1f) {
@@ -169,7 +181,7 @@ internal class LiveDetector(
         return "data:image/jpeg;base64," + Base64.encodeToString(jpeg.toByteArray(), Base64.NO_WRAP)
     }
 
-    fun close() {
+    private fun release() {
         closeLandmarker()
         frame = null
         blank = null

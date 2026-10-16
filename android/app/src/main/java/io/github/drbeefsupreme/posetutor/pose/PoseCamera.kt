@@ -8,6 +8,8 @@ import android.util.Log
 import android.util.Size
 import android.view.ViewGroup
 import android.webkit.WebView
+import androidx.annotation.MainThread
+import androidx.annotation.WorkerThread
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.CameraState
@@ -23,11 +25,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.getcapacitor.JSObject
 import com.google.mediapipe.tasks.core.Delegate
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
-internal data class PreviewRect(val x: Double, val y: Double, val width: Double, val height: Double)
+internal data class CssPixelRect(val x: Double, val y: Double, val width: Double, val height: Double)
 
 /** Analysis frames in sensor orientation; 1280 px wide upright photos in landscape, 960 in portrait. */
 private val ANALYSIS_SIZE = Size(1280, 960)
@@ -41,10 +41,13 @@ internal class PoseCamera(
     private val events: Events,
 ) {
     interface Events {
+        @WorkerThread
         fun onFrame(frame: JSObject)
 
+        @MainThread
         fun onReady(delegate: Delegate)
 
+        @MainThread
         fun onFailed(failure: CameraFailure, message: String)
     }
 
@@ -53,7 +56,6 @@ internal class PoseCamera(
     private var phase = Phase.OPENING
     private var devicePixelRatio = 1.0
     private val main = Handler(Looper.getMainLooper())
-    private val executor: ExecutorService = Executors.newSingleThreadExecutor()
     private val previewView = PreviewView(activity).apply {
         implementationMode = PreviewView.ImplementationMode.COMPATIBLE
         scaleType = PreviewView.ScaleType.FILL_CENTER
@@ -83,7 +85,7 @@ internal class PoseCamera(
     }
     private val firstFrameTimeout = Runnable { fail(CameraFailure.BUSY, "The camera started but sent no frames.") }
 
-    fun open(rect: PreviewRect, devicePixelRatio: Double) {
+    fun open(rect: CssPixelRect, devicePixelRatio: Double) {
         this.devicePixelRatio = devicePixelRatio
         val parent = webView.parent as ViewGroup
         parent.addView(previewView, parent.indexOfChild(webView), ViewGroup.LayoutParams(0, 0))
@@ -108,7 +110,7 @@ internal class PoseCamera(
         }
         followRotation()
         preview.surfaceProvider = previewView.surfaceProvider
-        analysis.setAnalyzer(executor, detector)
+        detector.attach(analysis)
         val camera = try {
             cameras.bindToLifecycle(activity, CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis)
         } catch (e: IllegalArgumentException) {
@@ -153,7 +155,7 @@ internal class PoseCamera(
         analysis.targetRotation = rotation
     }
 
-    fun place(rect: PreviewRect) {
+    fun place(rect: CssPixelRect) {
         previewView.layoutParams = previewView.layoutParams.apply {
             width = (rect.width * devicePixelRatio).roundToInt()
             height = (rect.height * devicePixelRatio).roundToInt()
@@ -165,7 +167,7 @@ internal class PoseCamera(
     fun reset() = detector.requestReset()
 
     fun capture(maxWidth: Int, done: (String?) -> Unit) {
-        if (phase == Phase.CLOSED) done(null) else executor.execute { done(detector.capture(maxWidth)) }
+        if (phase == Phase.CLOSED) done(null) else detector.capture(maxWidth, done)
     }
 
     fun close() {
@@ -176,8 +178,7 @@ internal class PoseCamera(
         cameraState?.removeObserver(cameraObserver)
         provider?.unbind(preview, analysis)
         analysis.clearAnalyzer()
-        executor.execute(detector::close)
-        executor.shutdown()
+        detector.close()
         (previewView.parent as? ViewGroup)?.removeView(previewView)
         webView.setBackgroundColor(Color.WHITE)
     }
