@@ -49,6 +49,14 @@ private enum class Mode(val label: String) {
     PREFER_OFFLINE("preferOffline"),
     /** The system recognizer as it chooses, which may use the network. */
     ONLINE("online"),
+    ;
+
+    val fallback: Mode?
+        get() = when (this) {
+            ON_DEVICE -> PREFER_OFFLINE
+            PREFER_OFFLINE -> ONLINE
+            ONLINE -> null
+        }
 }
 
 /** The native side of src/platform/voicePlugin.ts: one recognition session per `listen` call. */
@@ -142,8 +150,9 @@ class TutorVoicePlugin : Plugin() {
         override fun onError(error: Int) {
             if (pending !== call) return
             pending = null
-            if (error in LANGUAGE_MISSING && used != Mode.ONLINE && used == mode) {
-                mode = Mode.entries[used.ordinal + 1]
+            val fallback = used.fallback
+            if (error in LANGUAGE_MISSING && fallback != null && used == mode) {
+                mode = fallback
                 Log.i(TAG, "${used.label} recognizer has no language pack (error $error); using ${mode.label}")
                 begin(call)
                 return
