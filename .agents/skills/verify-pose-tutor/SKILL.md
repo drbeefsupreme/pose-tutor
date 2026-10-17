@@ -5,7 +5,7 @@ description: Drive Pose Tutor, the Android app, on the harness emulator the way 
 
 # Verify Pose Tutor
 
-The user surface is the app on an Android phone. Here it runs on the harness emulator `emulator-5564` (AVD `pose-tutor-harness`). The front camera plays a looped video of the 3D figure, so the real camera, MediaPipe and scoring path runs. `scripts/android/drive.ts` holds one session open and gives you short commands to drive it.
+Users touch the app on an Android phone. Here it runs on the harness emulator `emulator-5564` (AVD `pose-tutor-harness`). The front camera plays a looped video of the 3D figure, so the real camera, MediaPipe and scoring code runs. `scripts/android/drive.ts` holds one session open and gives you short commands to drive it.
 
 Read [features/README.md](features/README.md) next. It indexes the feature recipes.
 
@@ -38,13 +38,13 @@ A build takes 1 to 5 minutes and a boot 10 to 60 seconds. The session prints the
 
 ## Doctor
 
-Run this first, and again whenever a command fails in a way you do not expect. It changes nothing.
+Run this first, and again whenever a command fails in a way you do not expect. It does not change the app or the emulator.
 
 ```sh
 node scripts/android/drive.ts doctor
 ```
 
-Every line must start with `ok` and the exit code must be 0. The lines check the session process, the harness lock, that no other emulator runs, the boot, the `videofile:` camera, `-no-audio`, the app process, the page at `https://localhost/`, and the three test hooks. An `info` line gives the install time and the APK build time. If the APK is older than your change, stop the session and launch again.
+Every check line must start with `ok`, and the exit code must be 0. The lines check the session process, the harness lock, that no other emulator runs, the boot, the `videofile:` camera, `-no-audio`, the app process, the page at `https://localhost/`, and the three test hooks. An `info` line gives the install time and the APK build time. If the APK is older than your change, stop the session and launch again.
 
 ## Drive
 
@@ -111,7 +111,7 @@ $D wait "window.__tutorState().view.stage.kind === 'done' && window.__tutorState
 ```sh
 source scripts/android/env.sh
 adb -s emulator-5564 shell run-as io.github.drbeefsupreme.posetutor ls files/photos
-adb -s emulator-5564 emu rotate      # portrait and landscape
+adb -s emulator-5564 emu rotate      # turns the screen between portrait and landscape
 ```
 
 ## Evidence
