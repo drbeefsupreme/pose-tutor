@@ -9,7 +9,7 @@ Pose Tutor is an Android app that coaches the 12 men's bodybuilding prejudging p
 Top level:
 
 - `src/` is the app. See the next list.
-- `android/` is the Capacitor Android project. The plugins are in `android/app/src/main/java/io/github/drbeefsupreme/posetutor/`, one folder each for pose tracking, voice, the coach and secrets. `npm run android:lint` checks them against `android/app/lint-baseline.xml`.
+- `android/` is the Capacitor Android project. The plugins are in `android/app/src/main/java/io/github/drbeefsupreme/posetutor/`, one folder each for pose tracking, voice, the coach and secrets. `npm run android:lint` fails on any finding. `android/app/lint.xml` ignores only findings in Capacitor template files and in resources that library code uses. Fix a finding in our code.
 - `scripts/` holds the Node scripts. They may import `src/` types and `src/gate/`. `scripts/android/` builds, installs and drives the emulator. `scripts/android/lib/` is the shared emulator, CDP and render code. `scripts/figure/` builds the figure model with Bun. `scripts/lint/` is the oxlint plugin with the repo rules.
 - `public/figure/` is the built figure model. Rebuild it with `npm run figure`, never by hand.
 - `docs/` holds `docs/pose-spec.md` (the research) and four generated reports. `docs/shots/` is the git-ignored evidence of the device checks.

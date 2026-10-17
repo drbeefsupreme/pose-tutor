@@ -35,9 +35,10 @@ android {
     androidResources {
         noCompress += ['task']
     }
-    // npm run android:lint. lint-baseline.xml lists the findings from before lint was a gate; any new finding fails.
+    // npm run android:lint. Any finding fails it. lint.xml ignores only findings in Capacitor template files and in
+    // resources that only library code uses, which lint does not scan.
     lint {
-        baseline = file('lint-baseline.xml')
+        lintConfig = file('lint.xml')
         warningsAsErrors = true
         // These checks ask the network for newer versions, so their result changes with no code change.
         disable += ['GradleDependency', 'AndroidGradlePluginVersion', 'NewerVersionAvailable']
