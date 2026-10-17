@@ -1,0 +1,114 @@
+{
+ "at": "2026-10-16T22:00:29.313Z",
+ "device": "emulator-5564 (AVD pose-tutor-harness, Android 15, x86_64, -gpu host)",
+ "mode": "video",
+ "note": "Captured again after the figure model got one fixed look baked into its mesh. The renders differ by less than 0.1 of 255 per color channel, but the side-view tracking moved quarterTurnLeftSide from 100 to 93.7, which is more than the 5-point limit.",
+ "backend": {
+  "renderer": "Android Emulator OpenGL ES Translator (llvmpipe (LLVM 21.1.8, 256 bits))",
+  "software": true,
+  "delegate": "CPU"
+ },
+ "failures": [],
+ "cases": [
+  {
+   "id": "relaxedFront",
+   "pose": "relaxedFront",
+   "own": 100,
+   "topCue": null
+  },
+  {
+   "id": "quarterTurnLeftSide",
+   "pose": "quarterTurnLeftSide",
+   "own": 93.69564816095436,
+   "topCue": "Let your arms hang naturally."
+  },
+  {
+   "id": "relaxedBack",
+   "pose": "relaxedBack",
+   "own": 100,
+   "topCue": null
+  },
+  {
+   "id": "quarterTurnRightSide",
+   "pose": "quarterTurnRightSide",
+   "own": 100,
+   "topCue": null
+  },
+  {
+   "id": "frontDoubleBiceps",
+   "pose": "frontDoubleBiceps",
+   "own": 100,
+   "topCue": null
+  },
+  {
+   "id": "frontLatSpread",
+   "pose": "frontLatSpread",
+   "own": 100,
+   "topCue": null
+  },
+  {
+   "id": "sideChest",
+   "pose": "sideChest",
+   "own": 100,
+   "topCue": null
+  },
+  {
+   "id": "backDoubleBiceps",
+   "pose": "backDoubleBiceps",
+   "own": 98.34835559115508,
+   "topCue": "Drop your shoulders, spread your back."
+  },
+  {
+   "id": "backLatSpread",
+   "pose": "backLatSpread",
+   "own": 88.88888888888889,
+   "topCue": "Put your hands on your waist."
+  },
+  {
+   "id": "sideTriceps",
+   "pose": "sideTriceps",
+   "own": 96.81796212518947,
+   "topCue": "Front foot flat, back heel up."
+  },
+  {
+   "id": "absAndThighs",
+   "pose": "absAndThighs",
+   "own": 93.57329764670621,
+   "topCue": "Put both hands behind your head."
+  },
+  {
+   "id": "mostMuscular",
+   "pose": "mostMuscular",
+   "own": 100,
+   "topCue": null
+  },
+  {
+   "id": "fdbElbowsDropped",
+   "pose": "frontDoubleBiceps",
+   "own": 65.64394941045451,
+   "topCue": "Raise your elbows to shoulder height.",
+   "expectedCue": "Raise your elbows to shoulder height."
+  },
+  {
+   "id": "fdbFistsLow",
+   "pose": "frontDoubleBiceps",
+   "own": 69.69352772043936,
+   "topCue": "Bring your fists up to your ears.",
+   "expectedCue": "Bring your fists up to your ears."
+  },
+  {
+   "id": "flsElbowsIn",
+   "pose": "frontLatSpread",
+   "own": 81.59619173434763,
+   "topCue": "Spread your lats wider.",
+   "expectedCue": "Spread your lats wider."
+  },
+  {
+   "id": "bdbLeftArmLow",
+   "pose": "backDoubleBiceps",
+   "own": 79.8998572837817,
+   "topCue": "Lift your elbows above your shoulders.",
+   "expectedCue": "Lift your elbows above your shoulders."
+  }
+ ]
+}

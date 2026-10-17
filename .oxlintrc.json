@@ -1,0 +1,67 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "vitest"],
+  "jsPlugins": ["./scripts/lint/plugin.ts"],
+  "categories": { "correctness": "error" },
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/ban-ts-comment": [
+      "error",
+      { "ts-ignore": true, "ts-nocheck": true, "ts-expect-error": "allow-with-description", "minimumDescriptionLength": 10 }
+    ],
+    "vitest/no-focused-tests": "error",
+    "pose-tutor/no-new-promise": "error",
+    "pose-tutor/no-return-type-of-typeof": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          { "regex": "(^|/)gate(/|$)", "message": "App code must not import src/gate/. The gate is a separate test page; move shared code into src/pose/ or src/modes/." }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["scripts/**", "src/gate/**"],
+      "rules": { "no-restricted-imports": "off" }
+    },
+    {
+      "files": ["src/**/*.tsx", "src/ui/**"],
+      "plugins": ["react"],
+      "rules": { "react/rules-of-hooks": "error", "react/exhaustive-deps": "error" }
+    },
+    {
+      "files": ["src/ui/**", "src/progress/**"],
+      "rules": {
+        "pose-tutor/no-device-api": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "regex": "(^|/)gate(/|$)", "message": "App code must not import src/gate/. The gate is a separate test page; move shared code into src/pose/ or src/modes/." },
+              { "regex": "^@capacitor(-community)?/", "message": "src/ui/ and src/progress/ reach the device only through src/platform/." }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/pose/**", "src/modes/**", "src/coach/**", "src/intent/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "regex": "(^|/)gate(/|$)", "message": "App code must not import src/gate/. The gate is a separate test page; move shared code into src/pose/ or src/modes/." },
+              { "regex": "^@capacitor(-community)?/", "message": "src/pose/, src/modes/, src/coach/ and src/intent/ are pure logic. Do not import Capacitor." },
+              { "regex": "^three(/|$)", "message": "src/pose/, src/modes/, src/coach/ and src/intent/ are pure logic. Do not import three.js." },
+              { "regex": "^react(-dom)?(/|$)", "message": "src/pose/, src/modes/, src/coach/ and src/intent/ are pure logic. Do not import React." },
+              { "regex": "(^|/)platform(/|$)", "message": "src/pose/, src/modes/, src/coach/ and src/intent/ are pure logic. Do not import src/platform/; take what you need as a parameter." }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

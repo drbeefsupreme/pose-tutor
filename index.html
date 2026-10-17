@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!-- The one external call, jev, goes through native HTTP (CapacitorHttp), outside the page. Inline styles stay for
+     the <style> below and React's style attributes. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'" />
+<title>Pose Tutor</title>
+<style>
+  #root { display: flex; flex-direction: column; }
+  #root > * { flex: 1; min-height: 0; }
+  /* The native camera preview is drawn behind the transparent WebView while it shows, so the page is see-through
+     down to the camera pane. */
+  html[data-native-preview],
+  html[data-native-preview] body,
+  html[data-native-preview] #root,
+  html[data-native-preview] .tutor-run,
+  html[data-native-preview] .tutor-camera { background: transparent; }
+  /* The native preview fills the pane like object-fit: cover; the skeleton overlay must match it. */
+  html[data-native-preview] .tutor-camera canvas { object-fit: cover; }
+  html[data-native-preview] .tutor-stage[data-swapped] .tutor-figure {
+    mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+    mask-size: 100% 100%, var(--inset-w) var(--inset-h);
+    mask-position: 0 0, right var(--inset-gap) top var(--inset-gap);
+    mask-repeat: no-repeat;
+    mask-composite: exclude;
+  }
+</style>
+</head>
+<body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body>
+</html>

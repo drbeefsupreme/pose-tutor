@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ignores only for code that is not ours: Capacitor template files and resources that library code uses. Fix a
+     finding in our code; do not add it here. -->
+<lint>
+    <issue id="ObsoleteSdkInt">
+        <!-- Capacitor template folders for the launcher icon. -->
+        <ignore path="src/main/res/drawable-v24" />
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+
+    <issue id="UnusedResources">
+        <!-- Capacitor template files that the app does not use. -->
+        <ignore path="src/main/res/layout/activity_main.xml" />
+        <ignore path="src/main/res/drawable/ic_launcher_background.xml" />
+        <ignore path="src/main/res/drawable-v24/ic_launcher_foreground.xml" />
+        <ignore regexp="`R\.string\.(package_name|custom_url_scheme)`" />
+        <!-- npx cap sync writes config.xml, and Cordova's ConfigXmlParser reads it by name. -->
+        <ignore path="src/main/res/xml/config.xml" />
+        <!-- Capacitor's BridgeActivity sets AppTheme.NoActionBar, and that theme uses page_bg. -->
+        <ignore regexp="`R\.(style\.AppTheme_NoActionBar|color\.page_bg)`" />
+    </issue>
+
+    <issue id="MonochromeLauncherIcon">
+        <!-- The Capacitor template launcher icon. -->
+        <ignore path="src/main/res/mipmap-anydpi-v26/ic_launcher.xml" />
+        <ignore path="src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" />
+    </issue>
+
+    <issue id="IconDipSize">
+        <!-- The Capacitor template splash images. -->
+        <ignore path="src/main/res/drawable-*/splash.png" />
+    </issue>
+
+    <issue id="IconDuplicatesConfig">
+        <!-- The Capacitor template splash images. -->
+        <ignore path="src/main/res/drawable*/splash.png" />
+    </issue>
+
+    <issue id="IconLocation">
+        <!-- The Capacitor template splash image. -->
+        <ignore path="src/main/res/drawable/splash.png" />
+    </issue>
+</lint>

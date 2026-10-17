@@ -1,0 +1,25 @@
+{
+  "about": "Hand-built relaxed side with the left side to the camera: the athlete faces the image left (toes and nose point left), the chest turned about 15 degrees toward the camera, the near arm slightly back.",
+  "aspect": 1,
+  "joints": {
+    "nose": [0.455, 0.21],
+    "leftEar": [0.505, 0.2],
+    "rightEar": [0.49, 0.198],
+    "leftShoulder": [0.545, 0.3],
+    "rightShoulder": [0.445, 0.3],
+    "leftHip": [0.507, 0.6],
+    "rightHip": [0.487, 0.6],
+    "leftElbow": [0.608, 0.436],
+    "leftWrist": [0.608, 0.566],
+    "rightElbow": [0.406, 0.445],
+    "rightWrist": [0.341, 0.558],
+    "leftKnee": [0.51, 0.78],
+    "leftAnkle": [0.512, 0.95],
+    "leftHeel": [0.525, 0.97],
+    "leftFootIndex": [0.47, 0.985],
+    "rightKnee": [0.49, 0.78],
+    "rightAnkle": [0.492, 0.95],
+    "rightHeel": [0.505, 0.968],
+    "rightFootIndex": [0.452, 0.982]
+  }
+}
