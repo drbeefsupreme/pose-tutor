@@ -32,12 +32,12 @@ The rules for the pure folders: no Capacitor, three.js, React or `src/platform/`
 
 | Command | Run it when |
 |---|---|
-| `npm run check` | Before every commit. Lint, typecheck and unit tests, about 2 s, no device. CI runs it. |
-| `npm run check:android` | Before you commit a change to native code, the figure, scoring or the run loop. It runs the build, Android lint, gate, e2e, native check and phone shots on the harness emulator, about 15 to 20 minutes. It stops at the first failure. |
-| `npm run android:gate` | After a change to scoring, metrics, the spec or the figure. It is the fastest device answer, 1 to 2 minutes after the build. |
+| `npm run check` | Before every commit. Lint, typecheck, unit tests and the docs check, about 2 s, no device. CI runs it. |
+| `npm run check:android` | Before you commit a change to native code, the figure, scoring or the run loop. It runs the build, Android lint, gate, e2e, native check and phone shots on the harness emulator, about 8 minutes plus the build. It stops at the first failure. |
+| `npm run android:gate` | After a change to scoring, metrics, the spec or the figure. It is the fastest device answer, about 1 minute after the build. |
 | `npm run android:e2e -- --only=learn` | After a change to one mode. The phases are `learn`, `hold`, `judge`, `mirror` and `device`. |
 | `npm run android:build` then `npm run android:lint` | After a change in `android/`. CI runs both. |
-| `node scripts/check-docs.ts` | After you rename a file, a script or a command. It checks every path and npm script named in the docs. |
+| `node scripts/check-docs.ts` | After you rename a file, a script or a command. It checks every path and npm script named in the docs. `npm run check` runs it too. |
 
 To check a behavior by hand on the emulator, use the [verify-pose-tutor skill](.agents/skills/verify-pose-tutor/SKILL.md).
 

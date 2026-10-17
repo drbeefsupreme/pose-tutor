@@ -47,9 +47,9 @@ npm run android:build    # writes the debug APKs to android/app/build/outputs/ap
 
 | Command | What it checks |
 |---|---|
-| `npm run check` | Lint, typecheck and the unit tests. It needs no device and takes about 2 seconds. CI runs it on every push. |
+| `npm run check` | Lint, typecheck, the unit tests, and a check that the paths and commands in the docs exist. It needs no device and takes about 2 seconds. CI runs it on every push. |
 | `npm run android:lint` | Android lint on the Kotlin and Java code, after `npm run android:build`. CI runs it. |
-| `npm run check:android` | The device checks below, in order, on an emulator that the script starts and stops. It takes 15 to 20 minutes. |
+| `npm run check:android` | The device checks below, in order, on an emulator that the script starts and stops. It takes about 8 minutes, plus the APK build. |
 | `npm run android:gate` | Renders every pose with the figure and tracks it with the app's native plugin. It passes when every check passes and each pose scores within 5 points of `src/gate/baseline.json`. Report: [docs/gate-report.md](docs/gate-report.md). |
 | `npm run android:e2e` | Runs every mode on the emulator with videos of the figure as the camera, and checks speech, voice commands, the coach and the network. It reads the TypeSafe key from `TYPESAFE_API_KEY` or `.env.local`. Report: [docs/e2e-report.md](docs/e2e-report.md). |
 | `npm run android:native-check` | The coach and secret-store plugins. Report: [docs/native-report.md](docs/native-report.md). |
