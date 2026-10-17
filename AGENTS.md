@@ -51,7 +51,7 @@ To check a behavior by hand on the emulator, use the [verify-pose-tutor skill](.
 
 ## Invariants that lint does not check
 
-- **Re-baseline the gate only with a reason.** `npm run android:gate -- --save-baseline` replaces `src/gate/baseline.json`. Then write why in its `note` field. The gate report shows the note. Without it, a scoring regression becomes the new normal and nobody can see why.
+- **Re-baseline the gate only with a reason.** `npm run android:gate -- --save-baseline --note "<reason>"` replaces `src/gate/baseline.json` and writes the reason into its `note` field. The gate refuses `--save-baseline` without `--note`. The gate report shows the note. Without it, a scoring regression becomes the new normal and nobody can see why.
 - **Never use the host webcam, and keep the host muted.** The emulator scripts pass `-camera-front videofile:<clip>` and `-no-audio`, and the figure renders use headless Chrome with `--mute-audio`. Never use `-camera-front webcam0`. Never grant camera or microphone permission in the host's browser. A mistake films the person at the desk or plays the tutor's voice into the room.
 - **Run one emulator at a time.** The harness scripts take `/tmp/pose-tutor-harness-5564.lock` and fail fast when another run holds it. `npm run android:emulator` starts a second AVD on `emulator-5560` without the lock, so do not use it while a check runs. Two emulators with `-gpu host` starve the host, and a harness run stops any emulator on its port.
 - **Keep the TypeSafe key secret.** It lives only in `.env.local` (git-ignored, for the e2e run) or in the Android Keystore through the `TutorSecrets` plugin. Never put it in a log, a report, a screenshot, a command line or a commit. The e2e run fails if the key appears in logcat.
@@ -71,7 +71,7 @@ To add a pose:
 1. Write its section in `docs/pose-spec.md`, with sources and measured ranges.
 2. Add the id to `PoseId` in `src/pose/types.ts`. Then `npm run typecheck` lists every record that needs it: `POSE_SPECS`, `FIGURE_POSES`, `POSE_LABELS`, `JUDGE_CALLS`, the gate tables and the pose list in `scripts/android/drive.ts`.
 3. Add it to `JUDGE_ORDER` in `src/modes/judge.ts` if a judge calls it. The type does not force this.
-4. Run `npm run check`, then `npm run check:android`. Save a new gate baseline with a `note`.
+4. Run `npm run check`, then `npm run check:android`. Save a new gate baseline with `--note`.
 
 To add a fault cue:
 
@@ -79,7 +79,7 @@ To add a fault cue:
 2. Add or change the check in `src/pose/spec.ts`: the metric, the band, and the cue for `low` or `high`.
 3. Add a broken figure for it to `FAULTS` in `src/gate/cases.ts`, with the cue as `expectedCue`.
 4. Add a unit test in `src/pose/score.test.ts` if the fault has a landmark fixture in `src/pose/fixtures/`.
-5. Run `npm run check` and `npm run check:android`. Save a new gate baseline with a `note` if scores moved.
+5. Run `npm run check` and `npm run check:android`. Save a new gate baseline with `--note` if scores moved.
 
 ## Working rules
 

@@ -1,10 +1,10 @@
 // Tracking gate: npm run android:gate [-- --build | --no-build] [-- --mode=video|image] [-- --gpu=host|swiftshader]
-// [-- --save-baseline]
+// [-- --save-baseline --note "<reason>"]
 // `--mode=video` (the default) tracks frame to frame, as the live app does; `--mode=image` detects every frame afresh.
-// `--save-baseline` replaces src/gate/baseline.json with this run. Exits 1 on FAIL.
+// `--save-baseline` replaces src/gate/baseline.json with this run and needs `--note` to say why. Exits 1 on FAIL.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { compare, MAX_DIFF, toBaseline, type Baseline, type Comparison } from '../../src/gate/baseline.ts';
+import { baselineAction, compare, MAX_DIFF, toBaseline, type Baseline, type Comparison } from '../../src/gate/baseline.ts';
 import type { GateRun } from '../../src/gate/criteria.ts';
 import type { DetectMode, GateResult, NativeTimings } from '../../src/gate/page.ts';
 import { bootEmulator, ensureApk, installApp, lockHarness, startApp, type BuildMode } from './lib/device.ts';
@@ -71,8 +71,8 @@ function report(o: {
     `- Figure: \`public/figure\` (the model the app ships), rendered in the WebView by \`${run.backend.renderer}\`${run.backend.software ? ' (software GL)' : ''}.`,
     `- Tracker: the native plugin's \`detectImage\` (MediaPipe Tasks for Android, full model), delegate ${t.delegates.join(' and ')}. Frames ${run.size.join('x')}, ${run.frames} per case, PNG.`,
     `- Detection: ${MODE_TEXT[o.mode]}`,
-    `- Baseline: \`${relative(ROOT, BASELINE)}\`, the run of ${baseline.at} (${baseline.mode.toUpperCase()} mode, ${baseline.device})${o.baselineIsThisRun ? ', saved by this run' : ''}. Replace it with \`--save-baseline\`.`,
-    ...(baseline.note ? [`- Baseline note: ${baseline.note}`] : []),
+    `- Baseline: \`${relative(ROOT, BASELINE)}\`, the run of ${baseline.at} (${baseline.mode.toUpperCase()} mode, ${baseline.device})${o.baselineIsThisRun ? ', saved by this run' : ''}. Replace it with \`--save-baseline --note "<reason>"\`.`,
+    `- Baseline note: ${baseline.note}`,
     '',
     '## Timings',
     '',
@@ -114,8 +114,10 @@ main(async (cleanup) => {
   const modeOption = option('mode') ?? 'video';
   if (modeOption !== 'video' && modeOption !== 'image') throw new Error(`Unknown --mode=${modeOption}; use video or image.`);
   const mode: DetectMode = modeOption;
-  const saveBaseline = args.includes('--save-baseline');
-  if (!saveBaseline && !existsSync(BASELINE)) throw new Error(`No baseline at ${relative(ROOT, BASELINE)}. Run with --save-baseline to make one.`);
+  const action = baselineAction(args);
+  if (action.kind === 'compare' && !existsSync(BASELINE)) {
+    throw new Error(`No baseline at ${relative(ROOT, BASELINE)}. Run with --save-baseline --note "<reason>" to make one.`);
+  }
 
   const apk = ensureApk(build, ['gate.html']);
   cleanup(lockHarness());
@@ -146,8 +148,9 @@ main(async (cleanup) => {
     delegates: raw.delegates,
   };
 
-  const baseline = saveBaseline ? toBaseline(output.run, output.failures, device, mode) : (JSON.parse(readFileSync(BASELINE, 'utf8')) as Baseline);
-  if (saveBaseline) writeFileSync(BASELINE, `${JSON.stringify(baseline, null, 1)}\n`);
+  const baseline =
+    action.kind === 'save' ? toBaseline(output.run, output.failures, device, mode, action.note) : (JSON.parse(readFileSync(BASELINE, 'utf8')) as Baseline);
+  if (action.kind === 'save') writeFileSync(BASELINE, `${JSON.stringify(baseline, null, 1)}\n`);
   const comparison = compare(output.run, output.failures, baseline);
 
   mkdirSync(SHOTS, { recursive: true });
@@ -157,7 +160,7 @@ main(async (cleanup) => {
   writeFileSync(join(SHOTS, 'run.json'), JSON.stringify({ run: output.run, timings: raw, trace: output.trace }, null, 1));
   writeFileSync(
     REPORT,
-    report({ mode, device, userAgent, run: output.run, failures: output.failures, comparison, timings, baseline, baselineIsThisRun: saveBaseline }),
+    report({ mode, device, userAgent, run: output.run, failures: output.failures, comparison, timings, baseline, baselineIsThisRun: action.kind === 'save' }),
   );
 
   for (const f of output.failures) console.log(`FAIL ${f}`);
@@ -166,7 +169,7 @@ main(async (cleanup) => {
     `Delegate ${timings.delegates.join('/')}; detectImage median ${timings.detectMs.median.toFixed(0)} ms (p90 ${timings.detectMs.p90.toFixed(0)}); ` +
       `${timings.frames} frames in ${runS.toFixed(0)} s; largest own-pose difference ${comparison.maxDiff.toFixed(1)} (limit ${MAX_DIFF}).`,
   );
-  console.log(`Wrote ${relative(ROOT, REPORT)}${saveBaseline ? ` and the baseline ${relative(ROOT, BASELINE)}` : ''}.`);
+  console.log(`Wrote ${relative(ROOT, REPORT)}${action.kind === 'save' ? ` and the baseline ${relative(ROOT, BASELINE)}` : ''}.`);
   console.log(comparison.passed ? 'Tracking gate: PASS' : 'Tracking gate: FAIL');
   return comparison.passed ? 0 : 1;
 });

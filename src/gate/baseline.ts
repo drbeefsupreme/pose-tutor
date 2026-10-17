@@ -24,15 +24,36 @@ export interface Baseline {
   /** The criterion failures of the run (src/gate/criteria.ts). */
   readonly failures: readonly string[];
   readonly cases: readonly BaselineCase[];
-  /** Why this baseline was captured, written by hand after --save-baseline; the report shows it. */
-  readonly note?: string;
+  /** Why this baseline was saved, from `--note`. The gate report shows it. */
+  readonly note: string;
 }
 
-export function toBaseline(run: GateRun, failures: readonly string[], device: string, mode: DetectMode): Baseline {
+/** What the gate does with `src/gate/baseline.json`, from its command line. */
+export type BaselineAction = { readonly kind: 'compare' } | { readonly kind: 'save'; readonly note: string };
+
+/**
+ * `--save-baseline` needs `--note "<reason>"`. Without a reason, a scoring regression becomes the new normal and nobody
+ * can see why.
+ */
+export function baselineAction(args: readonly string[]): BaselineAction {
+  const at = args.indexOf('--note');
+  if (!args.includes('--save-baseline')) {
+    if (at !== -1) throw new Error('--note goes with --save-baseline. It says why the new baseline was saved.');
+    return { kind: 'compare' };
+  }
+  const note = at === -1 ? undefined : args[at + 1]?.trim();
+  if (note === undefined || note === '' || note.startsWith('--')) {
+    throw new Error('--save-baseline needs --note "<reason>": say why the scores may move. The gate report shows the note.');
+  }
+  return { kind: 'save', note };
+}
+
+export function toBaseline(run: GateRun, failures: readonly string[], device: string, mode: DetectMode, note: string): Baseline {
   return {
     at: run.at,
     device,
     mode,
+    note,
     backend: run.backend,
     failures,
     cases: [

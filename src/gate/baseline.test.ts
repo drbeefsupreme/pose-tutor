@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PoseId } from '../pose/types';
-import { compare, toBaseline } from './baseline';
+import { baselineAction, compare, toBaseline } from './baseline';
 import { POSE_IDS, type CallRow, type CaseResult, type FaultResult, type GateRun } from './criteria';
 
 const row = (pose: PoseId, own: number | null, topCue: string | null = null): CaseResult => ({
@@ -35,6 +35,7 @@ const saved = toBaseline(
   [],
   'emulator-5564',
   'video',
+  'The figure mesh changed.',
 );
 
 describe('gate baseline', () => {
@@ -64,5 +65,33 @@ describe('gate baseline', () => {
     const same = run([row('frontDoubleBiceps', 98), row('sideChest', null)], [fault(66, 'Raise your elbows to shoulder height.')]);
     expect(compare(same, [], saved).passed).toBe(true);
     expect(compare(same, ['fdbElbowsDropped gives "x"'], saved).passed).toBe(false);
+  });
+});
+
+describe('gate --save-baseline', () => {
+  const refusal = '--save-baseline needs --note "<reason>"';
+
+  it('refuses to save a baseline without a reason', () => {
+    expect(() => baselineAction(['--save-baseline'])).toThrow(refusal);
+    expect(() => baselineAction(['--save-baseline', '--note'])).toThrow(refusal);
+    expect(() => baselineAction(['--save-baseline', '--note', '  '])).toThrow(refusal);
+    expect(() => baselineAction(['--save-baseline', '--note', '--no-build'])).toThrow(refusal);
+    expect(() => baselineAction(['--save-baseline', '--note=The figure mesh changed.'])).toThrow(refusal);
+  });
+
+  it('saves with the reason, and compares when the flag is absent', () => {
+    expect(baselineAction(['--no-build', '--save-baseline', '--note', ' The figure mesh changed. '])).toEqual({
+      kind: 'save',
+      note: 'The figure mesh changed.',
+    });
+    expect(baselineAction(['--mode=video'])).toEqual({ kind: 'compare' });
+  });
+
+  it('refuses a note when no baseline is saved', () => {
+    expect(() => baselineAction(['--note', 'The figure mesh changed.'])).toThrow('--note goes with --save-baseline');
+  });
+
+  it('writes the note into the baseline', () => {
+    expect(toBaseline(run([row('sideChest', 90)]), [], 'emulator-5564', 'video', 'The figure mesh changed.').note).toBe('The figure mesh changed.');
   });
 });
