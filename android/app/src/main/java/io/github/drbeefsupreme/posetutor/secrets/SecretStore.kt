@@ -1,6 +1,8 @@
 package io.github.drbeefsupreme.posetutor.secrets
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -55,13 +57,17 @@ internal class SecretStore(context: Context) {
         }
         val ciphertext = cipher.doFinal(value.toByteArray(Charsets.UTF_8))
         val stored = "${Base64.encodeToString(cipher.iv, Base64.NO_WRAP)}:${Base64.encodeToString(ciphertext, Base64.NO_WRAP)}"
-        if (!prefs.edit().putString(name.id, stored).commit()) throw IOException("SharedPreferences did not save ${name.id}")
+        if (!commit { putString(name.id, stored) }) throw IOException("SharedPreferences did not save ${name.id}")
     }
 
     @Synchronized
     fun remove(name: SecretName) = keystore("remove ${name.id}") {
-        if (!prefs.edit().remove(name.id).commit()) throw IOException("SharedPreferences did not remove ${name.id}")
+        if (!commit { remove(name.id) }) throw IOException("SharedPreferences did not remove ${name.id}")
     }
+
+    /** The core-ktx `edit {}` that lint suggests drops the result of `commit()`, which set and remove need. */
+    @SuppressLint("UseKtx")
+    private fun commit(change: SharedPreferences.Editor.() -> Unit): Boolean = prefs.edit().apply(change).commit()
 
     private fun key(): SecretKey {
         val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }

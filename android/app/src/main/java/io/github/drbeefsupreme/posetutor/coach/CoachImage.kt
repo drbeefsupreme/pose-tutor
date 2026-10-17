@@ -3,6 +3,7 @@ package io.github.drbeefsupreme.posetutor.coach
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
+import androidx.core.graphics.scale
 import kotlin.math.roundToInt
 
 /**
@@ -38,7 +39,7 @@ internal fun decodeCoachImage(dataUrl: String): Bitmap {
 
     val scale = NANO_IMAGE_SHORT_SIDE.toFloat() / minOf(decoded.width, decoded.height)
     if (scale >= 1f) return decoded
-    val scaled = Bitmap.createScaledBitmap(decoded, (decoded.width * scale).roundToInt(), (decoded.height * scale).roundToInt(), true)
+    val scaled = decoded.scale((decoded.width * scale).roundToInt(), (decoded.height * scale).roundToInt())
     if (scaled !== decoded) decoded.recycle()
     return scaled
 }
