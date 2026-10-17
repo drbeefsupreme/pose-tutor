@@ -7,22 +7,22 @@ by hand.
 
 ## Run
 
-- When: 2026-10-16T22:02:09.174Z.
+- When: 2026-10-17T00:40:49.153Z.
 - Device: emulator-5564 (AVD pose-tutor-harness, Android 15, x86_64, -gpu host), WebView Chrome/124.0.6367.219.
 - Figure: `public/figure` (the model the app ships), rendered in the WebView by `Android Emulator OpenGL ES Translator (llvmpipe (LLVM 21.1.8, 256 bits))` (software GL).
 - Tracker: the native plugin's `detectImage` (MediaPipe Tasks for Android, full model), delegate CPU. Frames 1280x720, 10 per case, PNG.
 - Detection: VIDEO mode: every frame carries the gate clock and the landmarker tracks from frame to frame, as live tracking does, with the gate's lead-in (5 empty frames, 5 frames of the relaxed stance, then 10 of the pose).
-- Baseline: `src/gate/baseline.json`, the run of 2026-10-16T22:00:29.313Z (VIDEO mode, emulator-5564 (AVD pose-tutor-harness, Android 15, x86_64, -gpu host)). Replace it with `--save-baseline`.
+- Baseline: `src/gate/baseline.json`, the run of 2026-10-16T22:00:29.313Z (VIDEO mode, emulator-5564 (AVD pose-tutor-harness, Android 15, x86_64, -gpu host)). Replace it with `--save-baseline --note "<reason>"`.
 - Baseline note: Captured again after the figure model got one fixed look baked into its mesh. The renders differ by less than 0.1 of 255 per color channel, but the side-view tracking moved quarterTurnLeftSide from 100 to 93.7, which is more than the 5-point limit.
 
 ## Timings
 
-Whole run 18 s for 340 frames. The first `detectImage` (it builds the landmarker) took 783 ms.
+Whole run 18 s for 340 frames. The first `detectImage` (it builds the landmarker) took 753 ms.
 
 | ms | median | p90 | max |
 |---|---|---|---|
-| `detectImage` round trip (plugin call + detection) | 24 | 27 | 61 |
-| PNG encode of the frame in the WebView | 10 | 91 | 143 |
+| `detectImage` round trip (plugin call + detection) | 24 | 28 | 55 |
+| PNG encode of the frame in the WebView | 10 | 92 | 164 |
 
 ## Own-pose scores against the baseline
 

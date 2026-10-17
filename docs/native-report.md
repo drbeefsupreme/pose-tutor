@@ -1,9 +1,9 @@
 # TutorCoach and TutorSecrets on the emulator
 
-- When: 2026-10-16T22:05:37.313Z
+- When: 2026-10-17T00:44:08.127Z
 - Device: emulator-5564 (AVD pose-tutor-harness, Android 15, x86_64), AICore: (not installed)
 - APK: android/app/build/outputs/apk/debug/app-x86_64-debug.apk
-- Usage-metrics queue (com.google.android.datatransport, used by MediaPipe and ML Kit; see telemetry.txt): app databases: com.google.android.datatransport.events, com.google.android.datatransport.events-journal; scheduled jobs of the app: 5 (JOB #u0a209/-1688196438: e3ac49c io.github.drbeefsupreme.posetutor/com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService; u0a209 tag=*job*/io.github.drbeefsupreme.posetutor/com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService; Service: io.github.drbeefsupreme.posetutor/com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService; JobStatus{e3ac49c #u0a209/-1688196438 io.github.drbeefsupreme.posetutor/com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService u=0 s=10209 TIME=+23h59m56s116ms:none NET IDLE satisfied:0x13600000 unsatisfied:0x80000004}: 108019781; 0-ComponentInfo{io.github.drbeefsupreme.posetutor/com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService}: io.github.drbeefsupreme.posetutor)
+- Usage-metrics queue (com.google.android.datatransport, used by MediaPipe and ML Kit; disclosed in README.md, What leaves the phone): app databases: com.google.android.datatransport.events, com.google.android.datatransport.events-journal; scheduled jobs of the app: 5 (JOB #u0a209/-1688196438: 4e34ab9 io.github.drbeefsupreme.posetutor/com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService; u0a209 tag=*job*/io.github.drbeefsupreme.posetutor/com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService; Service: io.github.drbeefsupreme.posetutor/com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService; JobStatus{4e34ab9 #u0a209/-1688196438 io.github.drbeefsupreme.posetutor/com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService u=0 s=10209 TIME=+23h59m56s8ms:none NET IDLE satisfied:0x13600000 unsatisfied:0x80000004}: 108020632; 0-ComponentInfo{io.github.drbeefsupreme.posetutor/com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService}: io.github.drbeefsupreme.posetutor)
 - Result: 20/20 checks pass
 
 | Check | Result | Detail |
@@ -26,5 +26,5 @@
 | secrets set with an unknown key rejects with badKey | PASS | rejected code=badKey message="Unknown secret key \"other-key\". Allowed: typesafe-api-key." |
 | secrets remove without a key rejects with badKey | PASS | rejected code=badKey message="Unknown secret key \"null\". Allowed: typesafe-api-key." |
 | secrets remove clears the value | PASS | resolved null; then get resolved {"value":null} |
-| no crash, no exception from the app code | PASS | app pids 2435, 3261; crash buffer empty; stack lines in app code: 0; other exception lines in the app processes: 3 (tags: MessageQueue:; see logcat-app.txt) |
+| no crash, no exception from the app code | PASS | app pids 1971, 3281; crash buffer empty; stack lines in app code: 0; other exception lines in the app processes: 0 (tags: none; see logcat-app.txt) |
 | logcat does not contain the secret value | PASS | 0 lines with the dummy value |
