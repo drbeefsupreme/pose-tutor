@@ -58,7 +58,8 @@ for (const doc of DOCS) {
           const token = raw.replace(/[.:]+$/, '');
           if (!PATH.test(token) || /:\/\/|[$<>*{}~]|^-/.test(token) || token.includes('..') !== token.startsWith('..')) continue;
           paths++;
-          const found = [join(ROOT, token), join(ROOT, dirname(doc), token)].some((p) => existsSync(p) || ignored(relative(ROOT, p)));
+          const asDir = token.endsWith('/') ? '/' : '';
+          const found = [join(ROOT, token), join(ROOT, dirname(doc), token)].some((p) => existsSync(p) || ignored(relative(ROOT, p) + asDir));
           if (!found) missing.push(`${at}: ${token} does not exist`);
         }
       }
