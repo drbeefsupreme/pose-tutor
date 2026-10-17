@@ -21,26 +21,37 @@ import org.json.JSONObject
 private const val MICROPHONE = "microphone"
 private const val TAG = "TutorVoice"
 
-private val ERROR_CODES = mapOf(
-    SpeechRecognizer.ERROR_NETWORK_TIMEOUT to "network",
-    SpeechRecognizer.ERROR_NETWORK to "network",
-    SpeechRecognizer.ERROR_AUDIO to "audio-capture",
-    SpeechRecognizer.ERROR_SERVER to "server",
-    SpeechRecognizer.ERROR_CLIENT to "client",
-    SpeechRecognizer.ERROR_SPEECH_TIMEOUT to "no-speech",
-    SpeechRecognizer.ERROR_NO_MATCH to "no-match",
-    SpeechRecognizer.ERROR_RECOGNIZER_BUSY to "busy",
-    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS to "not-allowed",
-    SpeechRecognizer.ERROR_TOO_MANY_REQUESTS to "too-many-requests",
-    SpeechRecognizer.ERROR_SERVER_DISCONNECTED to "server-disconnected",
-    SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED to "language-not-supported",
-    SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE to "language-unavailable",
-    SpeechRecognizer.ERROR_CANNOT_CHECK_SUPPORT to "cannot-check-support",
-    SpeechRecognizer.ERROR_CANNOT_LISTEN_TO_DOWNLOAD_EVENTS to "cannot-check-support",
-)
+/** An error code newer than the phone's Android is not in the map, so it reaches the app as `error-<n>`. */
+private val ERROR_CODES: Map<Int, String> = buildMap {
+    put(SpeechRecognizer.ERROR_NETWORK_TIMEOUT, "network")
+    put(SpeechRecognizer.ERROR_NETWORK, "network")
+    put(SpeechRecognizer.ERROR_AUDIO, "audio-capture")
+    put(SpeechRecognizer.ERROR_SERVER, "server")
+    put(SpeechRecognizer.ERROR_CLIENT, "client")
+    put(SpeechRecognizer.ERROR_SPEECH_TIMEOUT, "no-speech")
+    put(SpeechRecognizer.ERROR_NO_MATCH, "no-match")
+    put(SpeechRecognizer.ERROR_RECOGNIZER_BUSY, "busy")
+    put(SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS, "not-allowed")
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        put(SpeechRecognizer.ERROR_TOO_MANY_REQUESTS, "too-many-requests")
+        put(SpeechRecognizer.ERROR_SERVER_DISCONNECTED, "server-disconnected")
+        put(SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED, "language-not-supported")
+        put(SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE, "language-unavailable")
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        put(SpeechRecognizer.ERROR_CANNOT_CHECK_SUPPORT, "cannot-check-support")
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        put(SpeechRecognizer.ERROR_CANNOT_LISTEN_TO_DOWNLOAD_EVENTS, "cannot-check-support")
+    }
+}
 
 /** The recognizer has no language pack for the language here; the next [Mode] may still work. */
-private val LANGUAGE_MISSING = setOf(SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED, SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE)
+private val LANGUAGE_MISSING: Set<Int> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    setOf(SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED, SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE)
+} else {
+    emptySet()
+}
 
 private enum class Mode(val label: String) {
     /** SpeechRecognizer.createOnDeviceSpeechRecognizer (Android 12+): audio never leaves the phone. */
