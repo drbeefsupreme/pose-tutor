@@ -5,6 +5,8 @@ import { adb, APP_ID, ENV, SERIAL, sleep } from './tools.ts';
 
 const run = promisify(execFile);
 const TABLES = ['/proc/net/tcp', '/proc/net/tcp6', '/proc/net/udp', '/proc/net/udp6'];
+/** The emulator's virtual DNS server. A name lookup can open a UDP socket to it under the app's uid. */
+const EMULATOR_DNS = '10.0.2.3';
 
 export function appUid(): number {
   const uid = /\buid:(\d+)/.exec(adb('shell', 'pm', 'list', 'packages', '-U', APP_ID))?.[1];
@@ -28,7 +30,7 @@ function remoteAddresses(tables: string, uid: number): string[] {
     const fields = line.trim().split(/\s+/);
     if (!/^\d+:$/.test(fields[0] ?? '') || Number(fields[7]) !== uid) return [];
     const ip = address(fields[2]?.split(':')[0] ?? '');
-    return /^(0\.0\.0\.0$|127\.|::1?$)/.test(ip) ? [] : [ip];
+    return /^(0\.0\.0\.0$|127\.|::1?$)/.test(ip) || ip === EMULATOR_DNS ? [] : [ip];
   });
 }
 
